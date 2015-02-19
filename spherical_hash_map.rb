@@ -10,7 +10,7 @@ class SphericalHashMap
   def add_value(polygon, value)
     azimuth_hashes = AzimuthHashInterval.new(polygon)
     polar_hashes = PolarHashInterval.new(polygon)
-    combined_hashes = azimuth_hashes.get_hash_array.product polar_hashes.get_hash_array
+    combined_hashes = azimuth_hashes.hash_array.product polar_hashes.hash_array
     combined_hashes.each{|h| @map[h].push value}
   end
   
@@ -25,6 +25,8 @@ end
 # the polygon needs to be planar and convex for the
 # north/south pole check to work
 class PolarHashInterval
+  attr_reader :hash_array
+  
   @@angular_resolution = 10 * 2 * Math::PI / 180
   @@vertical = Geom::Vector3d.new(0,0,1)
   
@@ -33,18 +35,18 @@ class PolarHashInterval
     
     @pl_min, @pl_max = polygon.collect.with_index{
       |p,i| calculate_segment_angles(p, polygon[(i+1)%polygon.length])
-    }.minmax
+    }.flatten.minmax
     
     # polygon surrounds north pole
-    if normals.collect{|n| n[2]>0}.reduce(:&)
+    if @normals.collect{|n| n[2]>0}.reduce(:&)
       @pl_min = 0
-      return
     end
     # polygon surrounds south pole
-    if normals.collect{|n| n[2]<=0}.reduce(:&)
+    if @normals.collect{|n| n[2]<=0}.reduce(:&)
       @pl_max = Math::PI
-      return
     end
+    
+    calculate_hash_array
   end
   
   def calculate_segment_angles(p1, p2)
@@ -61,7 +63,7 @@ class PolarHashInterval
     # check if intersection of line p1-p2 is on segment p1-p2
     l = (m % p2) / (m % (p2 - p1)) # intersection coefficient
     if l>0 and l<1
-      s = l*p1 + (1-l)*p2 # intersection
+      s = Geom::Vector3d.linear_combination(l, p1, 1-l, p2) # intersection
       angles.push self.class.calculate_polar_angle(s)
     end
     
@@ -81,8 +83,8 @@ class PolarHashInterval
     return (polar_angle/@@angular_resolution).floor
   end
   
-  def get_hash_array()
-    return (self.class.as_hash(@pl_min)..self.class.as_hash(@pl_max)).to_a
+  def calculate_hash_array
+    @hash_array = (self.class.as_hash(@pl_min)..self.class.as_hash(@pl_max)).to_a
   end
 end
 

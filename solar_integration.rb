@@ -222,7 +222,7 @@ class ShadowCaster
   # for the next evaluation as well, arranging the sun states in a sensible
   # way might be required ... an optimization for later
   def has_shadow(sun_direction)
-    for pyramid in @inclination_map.get_values(sun_direction)
+    for pyramid in @hash_map.get_values(sun_direction)
       has_shadow = true
       for normal in pyramid
         if normal % sun_direction < 0
