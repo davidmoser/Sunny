@@ -1,22 +1,77 @@
+# Simpler hashes for comparison ... NoHashMap is fastest at the moment ...
+# needs fixing
+class NoHashMap
+  def initialize
+    @array = []
+  end
+  
+  def add_value(polygon, value)
+    @array.push(value)
+  end
+  
+  def get_values(point)
+    return @array
+  end
+end
+
+class AzimuthHashMap
+  def initialize(resolution)
+    @map = Hash.new([]) # empty list is the default
+    @azimuth_class = Class.new(AzimuthHashInterval)
+    @azimuth_class.angular_resolution = resolution
+  end
+  
+  def add_value(polygon, value)
+    azimuth_hashes = @azimuth_class.new(polygon)
+    azimuth_hashes.hash_array.each{|h| @map[h].push value}
+  end
+  
+  def get_values(point)
+    azimuth_hash = @azimuth_class.calculate_hash(point)
+    return @map[azimuth_hash]
+  end
+end
+
+class PolarHashMap
+  def initialize(resolution)
+    @map = Hash.new([]) # empty list is the default
+    @polar_class = Class.new(PolarHashInterval)
+    @polar_class.angular_resolution = resolution
+  end
+  
+  def add_value(polygon, value)
+    polar_hashes = @polar_class.new(polygon)
+    polar_hashes.hash_array.each{|h| @map[h].push value}
+  end
+  
+  def get_values(point)
+    polar_hash = @polar_class.calculate_hash(point)
+    return @map[polar_hash]
+  end
+end
 
 # categorize and retrieve values according to the spherical angles that the
 # polygon covers (as a chain of line segments)
 # each value may up in multiple 'angle-bins' covered by its chain
 class SphericalHashMap
-  def initialize
+  def initialize(az_resolution, pl_resolution)
     @map = Hash.new([]) # empty list is the default
+    @azimuth_class = Class.new(AzimuthHashInterval)
+    @azimuth_class.angular_resolution = az_resolution
+    @polar_class = Class.new(PolarHashInterval)
+    @polar_class.angular_resolution = pl_resolution
   end
   
   def add_value(polygon, value)
-    azimuth_hashes = AzimuthHashInterval.new(polygon)
-    polar_hashes = PolarHashInterval.new(polygon)
+    azimuth_hashes = @azimuth_class.new(polygon)
+    polar_hashes = @polar_class.new(polygon)
     combined_hashes = azimuth_hashes.hash_array.product polar_hashes.hash_array
     combined_hashes.each{|h| @map[h].push value}
   end
   
   def get_values(point)
-    azimuth_hash = AzimuthHashInterval.calculate_hash(point)
-    polar_hash = PolarHashInterval.calculate_hash(point)
+    azimuth_hash = @azimuth_class.calculate_hash(point)
+    polar_hash = @polar_class.calculate_hash(point)
     return @map[[azimuth_hash, polar_hash]]
   end
 end
@@ -27,7 +82,11 @@ end
 class PolarHashInterval
   attr_reader :hash_array
   
-  @@angular_resolution = 10 * 2 * Math::PI / 180
+  def self.angular_resolution=(angular_resolution)
+    @angular_resolution = angular_resolution * 2 * Math::PI / 180
+  end
+  @angular_resolution = 10 * 2 * Math::PI / 180
+  
   @@vertical = Geom::Vector3d.new(0,0,1)
   
   def initialize(polygon)
@@ -80,7 +139,7 @@ class PolarHashInterval
   end
   
   def self.as_hash(polar_angle)
-    return (polar_angle/@@angular_resolution).floor
+    return (polar_angle/@angular_resolution).floor
   end
   
   def calculate_hash_array
@@ -93,7 +152,11 @@ end
 class AzimuthHashInterval
   attr_reader :hash_array
   
-  @@angular_resolution = 10 * 2 * Math::PI / 180
+  def self.angular_resolution=(angular_resolution)
+    @angular_resolution = angular_resolution * 2 * Math::PI / 180
+  end
+  @angular_resolution = 10 * 2 * Math::PI / 180
+  
   def initialize(polygon)
     @az_current = self.class.calculate_azimuth(polygon[0])
     @az_min = @az_max = @az_current
@@ -113,7 +176,7 @@ class AzimuthHashInterval
   end
   
   def self.as_hash(az)
-    return (az/@@angular_resolution).floor
+    return (az/@angular_resolution).floor
   end
   
   # adding segments while keeping track of how many times we looped

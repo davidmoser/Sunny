@@ -190,7 +190,7 @@ end
 # initialization is expensive, but calling has_shadow is fast
 class ShadowCaster
   def initialize(position, faces)
-    @hash_map = SphericalHashMap.new
+    @hash_map = SphericalHashMap.new(10,10)
     create_pyramids(position, faces)
   end
   
