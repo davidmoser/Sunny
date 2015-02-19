@@ -22,16 +22,19 @@ class SphericalHashMap
 end
 
 # determines the range of polar angle that a polygon covers
-# the polygon needs to be in a plane and convex for the
+# the polygon needs to be planar and convex for the
 # north/south pole check to work
 class PolarHashInterval
   @@angular_resolution = 10 * 2 * Math::PI / 180
-  @@vertical = Geom::Vector3d(0,0,1)
+  @@vertical = Geom::Vector3d.new(0,0,1)
   
   def initialize(polygon)
-    @pl_min, @pl_max = polygon.collect{|p| self.class.calculate_polar_angle(p)}.minmax
+    @normals = []
     
-    normals = calculate_normals(polygon)
+    @pl_min, @pl_max = polygon.collect.with_index{
+      |p,i| calculate_segment_angles(p, polygon[(i+1)%polygon.length])
+    }.minmax
+    
     # polygon surrounds north pole
     if normals.collect{|n| n[2]>0}.reduce(:&)
       @pl_min = 0
@@ -42,30 +45,27 @@ class PolarHashInterval
       @pl_max = Math::PI
       return
     end
-    # check if there's a polar angle max/min inside a segment
-    segments.zip pyramid do |s, n|
-      if is_extremal_angle_inside_segment(n, s)
-        if s[0]+s[1]>0
-          # min angle inside segment
-          @pl_min = [@pl_min, (calculate_polar_angle(normal)-Math::PI/2).abs].min
-        else
-          # max angle inside segment
-          @pl_max = [@pl_max, (calculate_polar_angle(normal)-Math::PI/2).abs].max
-        end
-      end
-    end
   end
   
-  def calculate_normals(polygon)
-    normals = []
-    polygon.each.with_index do |p,i|
-      normals.push p*polygon[(i+1)%polygon.length]
+  def calculate_segment_angles(p1, p2)
+    angles = []
+    angles.push self.class.calculate_polar_angle(p1)
+    angles.push self.class.calculate_polar_angle(p2)
+    
+    k = p1*p2 # k-plane spanned by p1, p2
+    m = k * @@vertical # the potential max/min polar angles of p1-p2 lie in the
+              # intersection of the k- and m-plane
+    
+    @normals.push m # need that for north-/south-pole check
+    
+    # check if intersection of line p1-p2 is on segment p1-p2
+    l = (m % p2) / (m % (p2 - p1)) # intersection coefficient
+    if l>0 and l<1
+      s = l*p1 + (1-l)*p2 # intersection
+      angles.push self.class.calculate_polar_angle(s)
     end
-    # make sure normals point inwards, assumes convexity
-    if normals[0] % polygon[2] < 0
-      normals.collect! {|n| n.reverse}
-    end
-    return normals
+    
+    return angles.minmax
   end
   
   def self.calculate_hash(vector)
@@ -81,15 +81,8 @@ class PolarHashInterval
     return (polar_angle/@@angular_resolution).floor
   end
   
-  def is_extremal_angle_inside_segment(normal, segment)
-    # normal to plane where the polar angle of the segment is extremal
-    extremal_normal = normal * @@vertical
-    # are segment points on same side of plane with extreme polar angles
-    return (extremal_normal % segment[0])*(extremal_normal % segment[1])>=0
-  end
-  
   def get_hash_array()
-    return self.class.as_hash(@pl_min)..self.class.as_hash(@pl_max).to_a
+    return (self.class.as_hash(@pl_min)..self.class.as_hash(@pl_max)).to_a
   end
 end
 
@@ -100,7 +93,7 @@ class AzimuthHashInterval
   
   @@angular_resolution = 10 * 2 * Math::PI / 180
   def initialize(polygon)
-    @az_current = self.class.calculate_azimuth(point)
+    @az_current = self.class.calculate_azimuth(polygon[0])
     @az_min = @az_max = @az_current
     @loop_number = 0 # how many times have we looped/ crossed 0=2pi border
     polygon.each {|p| add(p)}
@@ -165,6 +158,6 @@ class AzimuthHashInterval
   end
   
   def as_hash_array(az1, az2)
-    return self.class.as_hash(az1)..self.class.as_hash(az2).to_a
+    return (self.class.as_hash(az1)..self.class.as_hash(az2)).to_a
   end
 end

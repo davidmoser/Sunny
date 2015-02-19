@@ -1,7 +1,7 @@
 require 'sketchup.rb'
 require 'progressbar.rb'
-require 'flat_bounding_box.rb'
-require 'spherical_hash_map.rb'
+require 'solar_integration/flat_bounding_box.rb'
+require 'solar_integration/spherical_hash_map.rb'
 
 SKETCHUP_CONSOLE.show
 
