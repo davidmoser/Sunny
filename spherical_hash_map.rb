@@ -16,7 +16,7 @@ end
 
 class AzimuthHashMap
   def initialize(resolution)
-    @map = Hash.new([]) # empty list is the default
+    @map = Hash.new{|m,k| m[k]=[]} # empty list is the default
     @azimuth_class = Class.new(AzimuthHashInterval)
     @azimuth_class.angular_resolution = resolution
   end
@@ -34,7 +34,7 @@ end
 
 class PolarHashMap
   def initialize(resolution)
-    @map = Hash.new([]) # empty list is the default
+    @map = Hash.new{|m,k| m[k]=[]} # empty list is the default
     @polar_class = Class.new(PolarHashInterval)
     @polar_class.angular_resolution = resolution
   end
@@ -55,7 +55,7 @@ end
 # each value may up in multiple 'angle-bins' covered by its chain
 class SphericalHashMap
   def initialize(az_resolution, pl_resolution)
-    @map = Hash.new([]) # empty list is the default
+    @map = Hash.new{|m,k| m[k]=[]} # empty list is the default
     @azimuth_class = Class.new(AzimuthHashInterval)
     @azimuth_class.angular_resolution = az_resolution
     @polar_class = Class.new(PolarHashInterval)
@@ -65,8 +65,12 @@ class SphericalHashMap
   def add_value(polygon, value)
     azimuth_hashes = @azimuth_class.new(polygon)
     polar_hashes = @polar_class.new(polygon)
-    combined_hashes = azimuth_hashes.hash_array.product polar_hashes.hash_array
-    combined_hashes.each{|h| @map[h].push value}
+    # not using array.product(array) because it's slow
+    for i in azimuth_hashes.hash_array
+      for j in polar_hashes.hash_array
+        @map[[i,j]].push value
+      end
+    end
   end
   
   def get_values(point)
@@ -74,6 +78,11 @@ class SphericalHashMap
     polar_hash = @polar_class.calculate_hash(point)
     return @map[[azimuth_hash, polar_hash]]
   end
+end
+
+# pyramids
+class LazySphericalHashMap
+  
 end
 
 # determines the range of polar angle that a polygon covers
@@ -96,6 +105,10 @@ class PolarHashInterval
       |p,i| calculate_segment_angles(p, polygon[(i+1)%polygon.length])
     }.flatten.minmax
     
+    # make sure the normals point inwards
+    if @normals[0] % polygon[2] < 0
+      @normals.collect! {|n| n.reverse}
+    end
     # polygon surrounds north pole
     if @normals.collect{|n| n[2]>0}.reduce(:&)
       @pl_min = 0
@@ -117,7 +130,7 @@ class PolarHashInterval
     m = k * @@vertical # the potential max/min polar angles of p1-p2 lie in the
               # intersection of the k- and m-plane
     
-    @normals.push m # need that for north-/south-pole check
+    @normals.push k # need that for north-/south-pole check
     
     # check if intersection of line p1-p2 is on segment p1-p2
     l = (m % p2) / (m % (p2 - p1)) # intersection coefficient
@@ -172,7 +185,12 @@ class AzimuthHashInterval
   end
   
   def self.calculate_azimuth(point)
-    return Math::atan2(point[1], point[0])
+    az = Math::atan2(point[1], point[0])
+    if az>0
+      return az
+    else
+      return az + 2*Math::PI
+    end
   end
   
   def self.as_hash(az)
@@ -237,7 +255,7 @@ class HashMapVisualizationSphere
     ((az_resolution/2)..360).step(az_resolution) do |az|
       ((pl_resolution/2)..180).step(pl_resolution) do |pl|
         direction = angles_to_vector(az, pl)
-        @group.entities.add_text(map.get_values(direction).length.to_s, center + direction)
+        @group.entities.add_text(map.get_values(direction).length.to_s, center + direction) 
         progress_bar.update(180/pl_resolution * az/az_resolution + pl/pl_resolution)
       end
     end

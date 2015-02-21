@@ -29,13 +29,13 @@ end
 def find_uv(face)
   normal = face.normal
   if !normal.parallel? X_axis
-    u = normal.cross X_axis
+    u = normal * X_axis
   elsif !normal.parallel? Y_axis
-    u = normal.cross Y_axis
+    u = normal * Y_axis
   else
-    u = normal.cross Z_axis
+    u = normal * Z_axis
   end
-  v = normal.cross u
+  v = normal * u
   return u, v
 end
 
@@ -47,12 +47,5 @@ def find_extremal_points(u, v, list)
 end
 
 def find_max(vec, list)
-  max = Origin.vector_to(list[0].position)
-  for vertex in list
-    vec2 = Origin.vector_to(vertex.position)
-    if vec.dot(vec2) > vec.dot(max)
-      max = vec2
-    end
-  end
-  return Origin.offset max
+  return list.max_by{|v| Origin.vector_to(v)%vec}
 end
