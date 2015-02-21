@@ -8,10 +8,16 @@ SKETCHUP_CONSOLE.show
 UI.menu('Plugins').add_item('Integrate selection') {
   model = Sketchup.active_model
   
-  for face in model.selection
-    if face.typename=='Face'
-      $solar_integration.integrate(face)
-    end
+  model.selection.select{|f|f.typename=='Face'}.each do |f|
+    $solar_integration.integrate(f)
+  end
+}
+
+UI.menu('Plugins').add_item('Visualize spherical hash map') {
+  model = Sketchup.active_model
+  
+  model.selection.select{|f|f.typename=='Face'}.each do |f|
+    $solar_integration.visualize_hash_map(f)
   end
 }
 
@@ -22,6 +28,18 @@ class SolarIntegration
     @layer = Sketchup.active_model.layers.add 'solarintegration'
   end
 
+  def visualize_hash_map(face)
+    # center of gravity of vertices
+    center = face.vertices
+      .collect{|v|Geom::Vector3d.new v.position.to_a}.reduce(:+)
+      .transform(1.0/face.vertices.length)
+    center = Geom::Point3d.new center.to_a
+    
+    shadow_faces = find_shadow_faces(face)
+    shadow_caster = ShadowCaster.new(center, shadow_faces)
+    HashMapVisualizationSphere.new(center, shadow_caster.hash_map, 10, 10)
+  end
+  
   def integrate(face)
     grid = Grid.new(face, @grid_length)
     shadow_faces = find_shadow_faces(face)
@@ -94,8 +112,8 @@ class Grid
     v2 = bounding_box[3] - bounding_box[0]
     l1 = v1.length / grid_length
     l2 = v2.length / grid_length
-    @side1 = Geom::Vector3d.linear_combination(grid_length, v1.normalize, 0, v1)
-    @side2 = Geom::Vector3d.linear_combination(grid_length, v2.normalize, 0, v1)
+    @side1 = v1.normalize.transform(grid_length)
+    @side2 = v2.normalize.transform(grid_length)
     # a cross product is a 2-form, doesn't have unit length, but area.
     # might be a problem depending on how unit conversion works ... keep an eye on it.
     @normal = @side1 * @side2
@@ -189,8 +207,11 @@ end
 # determines if the @faces cast a shadow onto @position
 # initialization is expensive, but calling has_shadow is fast
 class ShadowCaster
+  attr_accessor :hash_map
+  
   def initialize(position, faces)
     @hash_map = SphericalHashMap.new(10,10)
+    #@hash_map = NoHashMap.new
     create_pyramids(position, faces)
   end
   
