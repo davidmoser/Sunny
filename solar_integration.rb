@@ -46,7 +46,7 @@ class SolarIntegration
     
     progress_bar = ProgressBar.new(grid.squares.length, 'Integrating irradiances...')
     
-    shadow_caster = ShadowCaster.new(face)
+    shadow_caster = LazyShadowCaster.new(face)
     for square in grid.squares
       shadow_caster.prepare_position(square.center)
       square.irradiance = integrate_square(grid.normal, shadow_caster)

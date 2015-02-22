@@ -75,15 +75,17 @@ end
 # keeps single @hash_map using LazyPyramids
 class LazyShadowCaster < AbstractShadowCaster
   def initialize(face)
-    lowest_position = face.vertices.collect{|v|v.position}.min{|v|ORIGIN.vector_to(v.position)%Z_AXIS}
-    @shadow_faces = find_shadow_faces(lowest_position, normal)
-    @hash_map = LazySphericalHashMap.new(10,10)
+    lowest_position = face.vertices.collect{|v|v.position}.min{|p|ORIGIN.vector_to(p)%Z_AXIS}
+    @shadow_faces = find_shadow_faces(lowest_position, face.normal)
+    angular_resolution = 10
+    @hash_map = SphericalHashMap.new(angular_resolution,angular_resolution)
     @pyramids = []
+    @current_position = ORIGIN
     
     for shadow_face in @shadow_faces
       mesh = shadow_face.mesh(0)
       for index in 1..mesh.count_polygons
-        pyramid = LazyPyramid.new(mesh.polygon_points_at(index))
+        pyramid = LazyPyramid.new(mesh.polygon_points_at(index), angular_resolution)
         @pyramids.push pyramid
       end
     end
@@ -113,8 +115,8 @@ class LazyPyramid < Pyramid
   def update(position, hash_map, step)
     @laziness -= step
     return if @laziness>0
-    @laziness = @polygon.min{|p|position.distance p} * @resolution
-    @keys.each{|k| hash_map[k].remove(self)}
+    @laziness = @polygon.collect{|p|position.distance p}.min * @resolution
+    hash_map.delete_value(@keys, self)
     @keys = super(position, @polygon, hash_map)
   end
 end

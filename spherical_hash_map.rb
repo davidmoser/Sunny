@@ -81,6 +81,10 @@ class SphericalHashMap
     polar_hash = @polar_class.calculate_hash(point)
     return @map[[azimuth_hash, polar_hash]]
   end
+  
+  def delete_value(keys, value)
+    keys.each{|k| @map[k].delete(value)}
+  end
 end
 
 # determines the range of polar angle that a polygon covers
