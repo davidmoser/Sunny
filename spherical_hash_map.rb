@@ -66,11 +66,14 @@ class SphericalHashMap
     azimuth_hashes = @azimuth_class.new(polygon)
     polar_hashes = @polar_class.new(polygon)
     # not using array.product(array) because it's slow
+    keys = []
     for i in azimuth_hashes.hash_array
       for j in polar_hashes.hash_array
+        keys.push [i,j]
         @map[[i,j]].push value
       end
     end
+    return keys
   end
   
   def get_values(point)
@@ -78,11 +81,6 @@ class SphericalHashMap
     polar_hash = @polar_class.calculate_hash(point)
     return @map[[azimuth_hash, polar_hash]]
   end
-end
-
-# pyramids
-class LazySphericalHashMap
-  
 end
 
 # determines the range of polar angle that a polygon covers

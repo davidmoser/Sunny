@@ -2,10 +2,10 @@
 # that's four 3DPoints forming a rectangle with right angles, in the same plane as the
 # given face, and containing the face
 
-X_axis = Geom::Vector3d.new(1,0,0)
-Y_axis = Geom::Vector3d.new(0,1,0)
-Z_axis = Geom::Vector3d.new(0,0,1)
-Origin = Geom::Point3d.new(0,0,0)
+X_AXIS = Geom::Vector3d.new(1,0,0)
+Y_AXIS = Geom::Vector3d.new(0,1,0)
+Z_AXIS = Geom::Vector3d.new(0,0,1)
+ORIGIN = Geom::Point3d.new(0,0,0)
 
 def attach_flat_bounding_box(face)
   u, v = find_uv(face)
@@ -28,12 +28,12 @@ end
 
 def find_uv(face)
   normal = face.normal
-  if !normal.parallel? X_axis
-    u = normal * X_axis
-  elsif !normal.parallel? Y_axis
-    u = normal * Y_axis
+  if !normal.parallel? X_AXIS
+    u = normal * X_AXIS
+  elsif !normal.parallel? Y_AXIS
+    u = normal * Y_AXIS
   else
-    u = normal * Z_axis
+    u = normal * Z_AXIS
   end
   v = normal * u
   return u, v
@@ -47,5 +47,5 @@ def find_extremal_points(u, v, list)
 end
 
 def find_max(vec, list)
-  return list.max_by{|v| Origin.vector_to(v)%vec}
+  return list.max_by{|v| ORIGIN.vector_to(v)%vec}
 end

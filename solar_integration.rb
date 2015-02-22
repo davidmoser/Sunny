@@ -27,7 +27,6 @@ class SolarIntegration
   def initialize
     @grid_length = 10 ##TODO: is that always cm?
     @sun_data = SunData.new
-    @layer = Sketchup.active_model.layers.add 'solarintegration'
   end
 
   def visualize_hash_map(face)
@@ -37,8 +36,8 @@ class SolarIntegration
       .transform(1.0/face.vertices.length)
     center = Geom::Point3d.new center.to_a
     
-    shadow_caster = ShadowCaster.new
-    shadow_caster.prepare_position(center, face.normal)
+    shadow_caster = ShadowCaster.new(face)
+    shadow_caster.prepare_position(center)
     HashMapVisualizationSphere.new(center, shadow_caster.hash_map, 10, 10)
   end
   
@@ -47,9 +46,9 @@ class SolarIntegration
     
     progress_bar = ProgressBar.new(grid.squares.length, 'Integrating irradiances...')
     
-    shadow_caster = ShadowCaster.new
+    shadow_caster = ShadowCaster.new(face)
     for square in grid.squares
-      shadow_caster.prepare_position(square.center, grid.normal)
+      shadow_caster.prepare_position(square.center)
       square.irradiance = integrate_square(grid.normal, shadow_caster)
       progress_bar.update(grid.squares.find_index(square))
     end
