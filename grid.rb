@@ -3,13 +3,11 @@ require 'solar_integration/flat_bounding_box.rb'
 # a grid is the splitting of a face into small @squares
 # all the small squares have the common @normal and @area
 class Grid
-  attr_reader :squares, :normal, :area
+  attr_reader :points, :normal, :area, :side1, :side2
   
   def initialize(face, grid_length)
     @face = face
     @grid_length = grid_length
-    
-    @group = Sketchup.active_model.entities.add_group
     
     bounding_box = attach_flat_bounding_box(face)
     
@@ -26,50 +24,14 @@ class Grid
     @normal.normalize!
     base = bounding_box[0]
     
-    progress_bar = ProgressBar.new(l1.floor*l2.floor, 'Creating squares...')
-    @squares = []
+    @points = []
     (0..l1).each do |i|
       (0..l2).each do |j|
-        center = base + Geom::Vector3d.linear_combination(i+0.5,@side1,j+0.5,@side2)
-        if face.classify_point(center) == 1
-          # lift by 1cm so not to intersect with original face
-          @squares.push Square.new(@group, center + @normal, @side1, @side2)
-          progress_bar.update(i*l2.floor + j)
+        point = base + Geom::Vector3d.linear_combination(i+0.5,@side1,j+0.5,@side2)
+        if face.classify_point(point) == 1
+          @points.push point
         end
       end
     end
   end  
-end
-
-# a square has a @center, @irradiance information and the reference
-# to its visual representation @face
-class Square
-  attr_reader :center
-  attr_accessor :irradiance, :color_bar, :face
-  
-  def initialize(group, center, side1, side2)
-    @center = center
-    corner = center + Geom::Vector3d.linear_combination(-0.5,side1,-0.5,side2)
-    @face = group.entities.add_face([corner, corner+side1, corner+side1+side2, corner+side2])
-    @face.edges.each{|e|e.hidden=true}
-  end
-  
-  def color_bar=(color_bar)
-    @color_bar = color_bar
-    update_color
-  end
-  
-  def update_color
-    @face.material = @color_bar.to_color(@irradiance)
-  end
-end
-
-class ColorBar
-  def initialize(min, max)
-    @min = min
-    @max = max
-  end
-  def to_color(number)
-    return [(number-@min) / (@max-@min), 0, 0]
-  end
 end

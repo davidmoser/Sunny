@@ -4,6 +4,7 @@ require 'solar_integration/grid.rb'
 require 'solar_integration/spherical_hash_map.rb'
 require 'solar_integration/shadow_caster.rb'
 require 'solar_integration/sun_data.rb'
+require 'solar_integration/data_collector.rb'
 
 SKETCHUP_CONSOLE.show
 
@@ -27,6 +28,7 @@ class SolarIntegration
   def initialize
     @grid_length = 10 ##TODO: is that always cm?
     @sun_data = SunData.new
+    @data_collector_classes = [TotalIrradianceCollector]
   end
 
   def visualize_hash_map(face)
@@ -44,28 +46,27 @@ class SolarIntegration
   def integrate(face)
     grid = Grid.new(face, @grid_length)
     
-    progress_bar = ProgressBar.new(grid.squares.length, 'Integrating irradiances...')
+    progress_bar = ProgressBar.new(grid.points.length, 'Integrating irradiances...')
     
     shadow_caster = LazyShadowCaster.new(face)
-    for square in grid.squares
-      shadow_caster.prepare_position(square.center)
-      square.irradiance = integrate_square(grid.normal, shadow_caster)
-      progress_bar.update(grid.squares.find_index(square))
+    data_collectors = @data_collector_classes.collect { |c| c.new(grid) }
+    for point in grid.points
+      shadow_caster.prepare_position(point)
+      data_collectors.each { |c| c.current_point=point }
+      render_point(grid.normal, shadow_caster, data_collectors)
+      progress_bar.update(grid.points.find_index(point))
     end
-    minmax = grid.squares.collect{|s| s.irradiance}.minmax
-    color_bar = ColorBar.new(*minmax)
-    grid.squares.each {|s| s.color_bar=color_bar }
+    data_collectors.each { |c| c.wrapup }
   end
   
-  def integrate_square(normal, shadow_caster)
-    # integrate over all solar position and tsis for point
-    irradiance = 0
+  def render_point(normal, shadow_caster, data_collectors)
     for state in @sun_data.states
+      irradiance = nil
       if state.vector%normal > 0 and !shadow_caster.has_shadow(state.vector)
-        irradiance += (normal % state.vector) * state.tsi
+        irradiance = (normal % state.vector) * state.tsi
       end
+      data_collectors.each {|c| c.put(state, irradiance)}
     end
-    return irradiance
   end
   
 end
