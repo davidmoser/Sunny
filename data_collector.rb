@@ -66,7 +66,7 @@ end
 class PolarAngleIrradianceHistogram < DataCollector
   def initialize(grid)
     @histogram = Hash.new(0)
-    @bin_size = 1 * 2 * Math::PI / 360
+    @bin_size = Math::PI / 360
   end
   
   def put(sun_state, irradiance)
@@ -79,6 +79,7 @@ class PolarAngleIrradianceHistogram < DataCollector
   end
   
   def wrapup
+    @histogram = @histogram.sort_by { |a,i| a }
     File.open('polar_angle_histogram.txt', 'w') do |file|
       @histogram.each { |a,i| file.write("#{a},#{i}\n") }
     end
