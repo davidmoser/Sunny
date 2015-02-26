@@ -24,13 +24,31 @@ UI.menu('Plugins').add_item('Visualize spherical hash map') {
   end
 }
 
+UI.menu('Plugins').add_item('Visualize sun states') {
+  model = Sketchup.active_model
+  
+  model.selection.select{|f|f.typename=='Face'}.each do |f|
+    $solar_integration.visualize_sun_states(f)
+  end
+}
+
 class SolarIntegration
   def initialize
     @grid_length = 10 ##TODO: is that always cm?
     @sun_data = SunData.new
-    @data_collector_classes = [PolarAngleIrradianceHistogram] #, TotalIrradianceSquares]
+    @data_collector_classes = [PolarAngleIrradianceHistogram, TotalIrradianceSquares]
   end
 
+  def visualize_sun_states(face)
+    # center of gravity of vertices
+    center = face.vertices
+      .collect{|v|Geom::Vector3d.new v.position.to_a}.reduce(:+)
+      .transform(1.0/face.vertices.length)
+    center = Geom::Point3d.new center.to_a
+    
+    SunDataVisualizationSphere.new(center, @sun_data)
+  end
+  
   def visualize_hash_map(face)
     # center of gravity of vertices
     center = face.vertices
