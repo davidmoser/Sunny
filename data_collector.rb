@@ -14,7 +14,7 @@ class DataCollector
   end
 end
 
-class TotalIrradianceCollector < DataCollector
+class TotalIrradianceSquares < DataCollector
   def initialize(grid)
     @group = Sketchup.active_model.entities.add_group
     
@@ -60,5 +60,27 @@ class ColorBar
   end
   def to_color(number)
     return [(number-@min) / (@max-@min), 0, 0]
+  end
+end
+
+class PolarAngleIrradianceHistogram < DataCollector
+  def initialize(grid)
+    @histogram = Hash.new(0)
+    @bin_size = 1 * 2 * Math::PI / 360
+  end
+  
+  def put(sun_state, irradiance)
+    return if not irradiance
+    v = sun_state.vector
+    rho = Math::hypot(v[0], v[1])
+    polar_angle = Math::atan2(rho, v[2])
+    bin = (polar_angle / @bin_size).floor * @bin_size * 360 / (2 * Math::PI)
+    @histogram[bin] += irradiance
+  end
+  
+  def wrapup
+    File.open('polar_angle_histogram.txt', 'w') do |file|
+      @histogram.each { |a,i| file.write("#{a},#{i}\n") }
+    end
   end
 end

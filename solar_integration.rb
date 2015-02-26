@@ -28,7 +28,7 @@ class SolarIntegration
   def initialize
     @grid_length = 10 ##TODO: is that always cm?
     @sun_data = SunData.new
-    @data_collector_classes = [TotalIrradianceCollector]
+    @data_collector_classes = [PolarAngleIrradianceHistogram] #, TotalIrradianceSquares]
   end
 
   def visualize_hash_map(face)
