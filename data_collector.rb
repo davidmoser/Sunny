@@ -37,7 +37,11 @@ class TotalIrradianceSquares < DataCollector
   def wrapup
     minmax = @squares.values.collect{|s| s.irradiance}.minmax
     color_bar = ColorBar.new(*minmax)
-    @squares.values.each {|s| s.face.material=color_bar.to_color(s.irradiance) }
+    progress = Progress.new(@squares.length, 'Coloring squares...')
+    @squares.values.each do |s|
+      s.face.material=color_bar.to_color(s.irradiance)
+      progress.work
+    end
   end
 end
 
