@@ -64,10 +64,10 @@ class SolarIntegration
   def integrate(face)
     grid = Grid.new(face, @grid_length)
     
-    progress_bar = ProgressBar.new(grid.points.length, 'Integrating irradiances...')
-    
-    shadow_caster = LazyShadowCaster.new(face)
+    shadow_caster = ShadowCaster.new(face)
     data_collectors = @data_collector_classes.collect { |c| c.new(grid) }
+    
+    progress_bar = ProgressBar.new(grid.points.length, 'Integrating irradiances...')
     for point in grid.points
       shadow_caster.prepare_position(point)
       data_collectors.each { |c| c.current_point=point }

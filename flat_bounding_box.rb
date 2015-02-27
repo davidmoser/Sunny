@@ -1,13 +1,12 @@
-# adorns a face with a 'bounding_box' attribute,
-# that's four 3DPoints forming a rectangle with right angles, in the same plane as the
-# given face, and containing the face
+# the flat bounding box consists of four 3DPoints forming a rectangle with right
+# angles, in the same plane as the given face, and containing the face
 
 X_AXIS = Geom::Vector3d.new(1,0,0)
 Y_AXIS = Geom::Vector3d.new(0,1,0)
 Z_AXIS = Geom::Vector3d.new(0,0,1)
 ORIGIN = Geom::Point3d.new(0,0,0)
 
-def attach_flat_bounding_box(face)
+def calculate_flat_bounding_box(face)
   u, v = find_uv(face)
   u_min, u_max, v_min, v_max = find_extremal_points(u, v, face.vertices)
   
@@ -22,7 +21,6 @@ def attach_flat_bounding_box(face)
   c4 = Geom.intersect_line_line(l4, l1)
 
   bounding_box = [c1, c2, c3, c4]
-  #face.set_attribute 'solarintegration', 'flat_bounding_box', bounding_box
   return bounding_box
 end
 
