@@ -1,5 +1,5 @@
 require 'sketchup.rb'
-require 'progressbar.rb'
+require 'solar_integration/progress.rb'
 require 'solar_integration/grid.rb'
 require 'solar_integration/spherical_hash_map.rb'
 require 'solar_integration/shadow_caster.rb'
@@ -67,12 +67,12 @@ class SolarIntegration
     shadow_caster = ShadowCaster.new(face)
     data_collectors = @data_collector_classes.collect { |c| c.new(grid) }
     
-    progress_bar = ProgressBar.new(grid.points.length, 'Integrating irradiances...')
+    progress = Progress.new(grid.points.length, 'Integrating irradiances...')
     for point in grid.points
       shadow_caster.prepare_position(point)
       data_collectors.each { |c| c.current_point=point }
       render_point(grid.normal, shadow_caster, data_collectors)
-      progress_bar.update(grid.points.find_index(point))
+      progress.work
     end
     data_collectors.each { |c| c.wrapup }
   end

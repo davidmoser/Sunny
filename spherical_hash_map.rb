@@ -1,5 +1,6 @@
-# Simpler hashes for comparison ... NoHashMap is fastest at the moment ...
-# needs fixing
+require 'solar_integration/progress.rb'
+
+# Simpler hashes for comparison
 class NoHashMap
   def initialize
     @array = []
@@ -252,13 +253,13 @@ class HashMapVisualizationSphere
   
   def initialize(center, map, az_resolution, pl_resolution)
     @group = Sketchup.active_model.entities.add_group
-    progress_bar = ProgressBar.new(360/az_resolution * 180/pl_resolution, 'Creating hash sphere...')
+    progress = Progress.new(360/az_resolution * 180/pl_resolution, 'Creating hash sphere...')
     @radius = 30
     ((az_resolution/2)..360).step(az_resolution) do |az|
       ((pl_resolution/2)..180).step(pl_resolution) do |pl|
         direction = angles_to_vector(az, pl)
         @group.entities.add_text(map.get_values(direction).length.to_s, center + direction) 
-        progress_bar.update(180/pl_resolution * az/az_resolution + pl/pl_resolution)
+        progress.work
       end
     end
   end

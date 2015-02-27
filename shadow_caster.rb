@@ -1,4 +1,3 @@
-require 'progressbar.rb'
 require 'solar_integration/spherical_hash_map.rb'
 
 Z_AXIS = Geom::Vector3d.new(0,0,1)

@@ -1,3 +1,5 @@
+require 'solar_integration/progress.rb'
+
 class DataCollector
   attr_writer :current_point
   
@@ -18,12 +20,12 @@ class TotalIrradianceSquares < DataCollector
   def initialize(grid)
     @group = Sketchup.active_model.entities.add_group
     
-    progress_bar = ProgressBar.new(grid.points.length, 'Creating squares...')
+    progress = Progress.new(grid.points.length, 'Creating squares...')
     @squares = Hash.new
     grid.points.each do |p|
       # lift by 1cm so not to intersect with original face
       @squares[p] = Square.new(@group, p + grid.normal, grid.side1, grid.side2)
-      progress_bar.update(grid.points.find_index(p))
+      progress.work
     end
   end
   

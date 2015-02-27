@@ -9,7 +9,7 @@ class Grid
     @face = face
     @grid_length = grid_length
     
-    bounding_box = attach_flat_bounding_box(face)
+    bounding_box = calculate_flat_bounding_box(face)
     
     v1 = bounding_box[1] - bounding_box[0]
     v2 = bounding_box[3] - bounding_box[0]

@@ -1,3 +1,4 @@
+require 'solar_integration/progress.rb'
 
 # information about all the sun paths, irradiances etc.
 class SunData
@@ -49,11 +50,11 @@ end
 class SunDataVisualizationSphere
   def initialize(center, sun_data)
     @group = Sketchup.active_model.entities.add_group
-    progress_bar = ProgressBar.new(sun_data.states.length, 'Creating sun data sphere...')
+    progress = Progress.new(sun_data.states.length, 'Creating sun data sphere...')
     @radius = 30
     sun_data.states.each do |s|
       @group.entities.add_text('.', center + s.vector.transform(@radius)) 
-      progress_bar.update(sun_data.states.find_index(s))
+      progress.work
     end
   end
 end
