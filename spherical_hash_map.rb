@@ -251,8 +251,8 @@ end
 # to debug the hash map
 class HashMapVisualizationSphere
   
-  def initialize(center, map, az_resolution, pl_resolution)
-    @group = Sketchup.active_model.entities.add_group
+  def initialize(entities, center, map, az_resolution, pl_resolution)
+    @group = entities.add_group
     progress = Progress.new(360/az_resolution * 180/pl_resolution, 'Creating hash sphere...')
     @radius = 30
     ((az_resolution/2)..360).step(az_resolution) do |az|

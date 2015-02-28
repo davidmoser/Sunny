@@ -10,8 +10,7 @@ class SunData
     @day_times = 1..23
     # initialize states
     # only using single time for now
-    model = Sketchup.active_model
-    si=model.shadow_info
+    si = Sketchup.active_model.shadow_info
     t_old = si['ShadowTime']
     
 #    t = Time.new(2014)
@@ -48,8 +47,8 @@ end
 
 # to debug the hash map
 class SunDataVisualizationSphere
-  def initialize(center, sun_data)
-    @group = Sketchup.active_model.entities.add_group
+  def initialize(entities, center, sun_data)
+    @group = entities.add_group
     progress = Progress.new(sun_data.states.length, 'Creating sun data sphere...')
     @radius = 30
     sun_data.states.each do |s|

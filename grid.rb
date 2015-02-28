@@ -3,7 +3,7 @@ require 'solar_integration/flat_bounding_box.rb'
 # a grid is the splitting of a face into small @squares
 # all the small squares have the common @normal and @area
 class Grid
-  attr_reader :points, :normal, :area, :side1, :side2
+  attr_reader :points, :normal, :area, :side1, :side2, :face
   
   def initialize(face, grid_length)
     @face = face

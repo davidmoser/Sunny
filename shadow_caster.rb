@@ -8,8 +8,8 @@ ORIGIN = Geom::Point3d.new(0,0,0)
 class AbstractShadowCaster
   attr_accessor :hash_map
   
-  def initialize(face)
-    @normal = face.normal
+  def initialize(polygons, face)
+    raise 'need to implement'
   end
   
   def prepare_position(position)
@@ -26,15 +26,17 @@ end
 
 # creates a new @hash_map for each position and fills it with pyramids
 class ShadowCaster < AbstractShadowCaster
+  def initialize(polygons, face)
+    @polygons = polygons
+    @normal = face.normal
+  end
+  
   def prepare_position(position)
-    shadow_faces = find_shadow_faces(position, @normal)
+    shadow_polygons = find_shadow_polygons(@polygons, position, @normal)
     @hash_map = SphericalHashMap.new(10,10)
-    for shadow_face in shadow_faces
-      mesh = shadow_face.mesh(0)
-      for index in 1..mesh.count_polygons
-        pyramid = Pyramid.new
-        pyramid.update(position, mesh.polygon_points_at(index), @hash_map)
-      end
+    for shadow_polygon in shadow_polygons
+      pyramid = Pyramid.new
+      pyramid.update(position, shadow_polygon, @hash_map)
     end
   end
 end
@@ -73,20 +75,17 @@ end
 
 # keeps single @hash_map using LazyPyramids
 class LazyShadowCaster < AbstractShadowCaster
-  def initialize(face)
+  def initialize(face, polygons)
     lowest_position = face.vertices.collect{|v|v.position}.min{|p|ORIGIN.vector_to(p)%Z_AXIS}
-    @shadow_faces = find_shadow_faces(lowest_position, face.normal)
+    @shadow_polygons = find_shadow_polygons(polygons, lowest_position, face.normal)
     angular_resolution = 10
     @hash_map = SphericalHashMap.new(angular_resolution,angular_resolution)
     @pyramids = []
     @current_position = ORIGIN
     
-    for shadow_face in @shadow_faces
-      mesh = shadow_face.mesh(0)
-      for index in 1..mesh.count_polygons
-        pyramid = LazyPyramid.new(mesh.polygon_points_at(index), angular_resolution)
-        @pyramids.push pyramid
-      end
+    for shadow_polygon in @shadow_polygons
+      pyramid = LazyPyramid.new(shadow_polygon, angular_resolution)
+      @pyramids.push pyramid
     end
   end
   
@@ -122,20 +121,21 @@ end
 
 # for the shadow cast onto the face only faces that are above the horizon
 # and on the front side of the face are relevant
-def find_shadow_faces(point, normal)
-  faces = []
-  for f in Sketchup.active_model.active_entities.select{|f| f.typename=='Face'}
-    for v in f.vertices
-      if is_above_plane(v.position, point, Z_AXIS) and
-          is_above_plane(v.position, point, normal)
-        faces.push f
+def find_shadow_polygons(polygons, point, normal)
+  shadow_polygons = []
+  for polygon in polygons
+    for p in polygon
+      if is_above_plane(p, point, Z_AXIS) and
+          is_above_plane(p, point, normal)
+        shadow_polygons.push polygon
         break
       end
     end
   end
-  return faces
+  return shadow_polygons
 end
 
 def is_above_plane(point, plane_base, plane_normal)
     return (point - plane_base) % plane_normal > 0
 end
+

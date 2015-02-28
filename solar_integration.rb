@@ -5,6 +5,7 @@ require 'solar_integration/spherical_hash_map.rb'
 require 'solar_integration/shadow_caster.rb'
 require 'solar_integration/sun_data.rb'
 require 'solar_integration/data_collector.rb'
+require 'solar_integration/model_exploder.rb'
 
 SKETCHUP_CONSOLE.show
 
@@ -46,7 +47,7 @@ class SolarIntegration
       .transform(1.0/face.vertices.length)
     center = Geom::Point3d.new center.to_a
     
-    SunDataVisualizationSphere.new(center, @sun_data)
+    SunDataVisualizationSphere.new(face.parent.entities, center, @sun_data)
   end
   
   def visualize_hash_map(face)
@@ -56,15 +57,17 @@ class SolarIntegration
       .transform(1.0/face.vertices.length)
     center = Geom::Point3d.new center.to_a
     
-    shadow_caster = ShadowCaster.new(face)
+    polygons = explode_model(Sketchup.active_model)
+    shadow_caster = ShadowCaster.new(polygons, face)
     shadow_caster.prepare_position(center)
-    HashMapVisualizationSphere.new(center, shadow_caster.hash_map, 10, 10)
+    HashMapVisualizationSphere.new(face.parent.entities, center, shadow_caster.hash_map, 10, 10)
   end
   
   def integrate(face)
     grid = Grid.new(face, @grid_length)
     
-    shadow_caster = ShadowCaster.new(face)
+    polygons = explode_model(Sketchup.active_model)
+    shadow_caster = ShadowCaster.new(polygons, face)
     data_collectors = @data_collector_classes.collect { |c| c.new(grid) }
     
     progress = Progress.new(grid.points.length, 'Integrating irradiances...')
