@@ -29,7 +29,7 @@ class Grid
       (0..l2).each do |j|
         point = base + Geom::Vector3d.linear_combination(i+0.5,@side1,j+0.5,@side2)
         if face.classify_point(point) == 1
-          @points.push point
+          @points.push point + @normal
         end
       end
     end

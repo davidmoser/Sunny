@@ -25,7 +25,7 @@ class TotalIrradianceSquares < DataCollector
     @squares = Hash.new
     grid.points.each do |p|
       # lift by 1cm so not to intersect with original face
-      @squares[p] = Square.new(@group, p + grid.normal, grid.side1, grid.side2)
+      @squares[p] = Square.new(@group, p, grid.side1, grid.side2)
       progress.work
     end
     Sketchup.active_model.commit_operation

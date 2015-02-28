@@ -5,7 +5,7 @@ require 'solar_integration/spherical_hash_map.rb'
 require 'solar_integration/shadow_caster.rb'
 require 'solar_integration/sun_data.rb'
 require 'solar_integration/data_collector.rb'
-require 'solar_integration/model_exploder.rb'
+require 'solar_integration/polygon_collector.rb'
 
 SKETCHUP_CONSOLE.show
 
@@ -33,6 +33,14 @@ UI.menu('Plugins').add_item('Visualize sun states') {
   end
 }
 
+UI.menu('Plugins').add_item('Print polygons') {
+  model = Sketchup.active_model
+  
+  for p in collect_model_polygons(model)
+    puts p
+  end
+}
+
 class SolarIntegration
   def initialize
     @grid_length = 10 ##TODO: is that always cm?
@@ -55,9 +63,9 @@ class SolarIntegration
     center = face.vertices
       .collect{|v|Geom::Vector3d.new v.position.to_a}.reduce(:+)
       .transform(1.0/face.vertices.length)
-    center = Geom::Point3d.new center.to_a
+    center = Geom::Point3d.new(center.to_a) + face.normal.normalize
     
-    polygons = explode_model(Sketchup.active_model)
+    polygons = collect_model_polygons(Sketchup.active_model)
     shadow_caster = ShadowCaster.new(polygons, face)
     shadow_caster.prepare_position(center)
     HashMapVisualizationSphere.new(face.parent.entities, center, shadow_caster.hash_map, 10, 10)
@@ -66,7 +74,7 @@ class SolarIntegration
   def integrate(face)
     grid = Grid.new(face, @grid_length)
     
-    polygons = explode_model(Sketchup.active_model)
+    polygons = collect_model_polygons(Sketchup.active_model)
     shadow_caster = ShadowCaster.new(polygons, face)
     data_collectors = @data_collector_classes.collect { |c| c.new(grid) }
     
