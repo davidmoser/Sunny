@@ -4,29 +4,31 @@ class DataCollector
   attr_writer :current_point
   
   def initialize(grid)
-    # implement this
+    raise 'need to implement'
   end
   
   def put(sun_state, irradiance)
-    # implement this
+    raise 'need to implement'
   end
   
   def wrapup
-    # implement this
+    raise 'need to implement'
   end
 end
 
 class TotalIrradianceSquares < DataCollector
   def initialize(grid)
-    @group = Sketchup.active_model.entities.add_group
+    @group = grid.face.parent.entities.add_group
     
     progress = Progress.new(grid.points.length, 'Creating squares...')
+    Sketchup.active_model.start_operation('Creating squares', true)
     @squares = Hash.new
     grid.points.each do |p|
       # lift by 1cm so not to intersect with original face
       @squares[p] = Square.new(@group, p + grid.normal, grid.side1, grid.side2)
       progress.work
     end
+    Sketchup.active_model.commit_operation
   end
   
   def put(sun_state, irradiance)
@@ -38,10 +40,12 @@ class TotalIrradianceSquares < DataCollector
     minmax = @squares.values.collect{|s| s.irradiance}.minmax
     color_bar = ColorBar.new(*minmax)
     progress = Progress.new(@squares.length, 'Coloring squares...')
+    Sketchup.active_model.start_operation('Coloring squares', true)
     @squares.values.each do |s|
       s.face.material=color_bar.to_color(s.irradiance)
       progress.work
     end
+    Sketchup.active_model.commit_operation
   end
 end
 
