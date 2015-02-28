@@ -1,4 +1,5 @@
 require 'solar_integration/progress.rb'
+require 'solar_integration/angle_conversion.rb'
 
 class DataCollector
   attr_writer :current_point
@@ -76,7 +77,7 @@ end
 class PolarAngleIrradianceHistogram < DataCollector
   def initialize(grid)
     @histogram = Hash.new(0)
-    @bin_size = Math::PI / 360
+    @bin_size = to_radian(1)
   end
   
   def put(sun_state, irradiance)
@@ -84,7 +85,7 @@ class PolarAngleIrradianceHistogram < DataCollector
     v = sun_state.vector
     rho = Math::hypot(v[0], v[1])
     polar_angle = Math::atan2(rho, v[2])
-    bin = (polar_angle / @bin_size).floor * @bin_size * 360 / (2 * Math::PI)
+    bin = to_degree((polar_angle / @bin_size).floor * @bin_size)
     @histogram[bin] += irradiance
   end
   

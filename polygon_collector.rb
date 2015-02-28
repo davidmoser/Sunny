@@ -4,13 +4,13 @@ def collect_model_polygons(model)
 end
 
 def collect_from_entities(entities, transformation)
-  ps = []
+  polygons = []
   entities.each do |e|
-    collect_from_entity(e).each do |p|
-      ps.push p.collect{|v|v.transform(transformation)}
+    collect_from_entity(e).each do |polygon|
+      polygons.push polygon.collect{|p|p.transform(transformation)}
     end
   end
-  return ps
+  return polygons
 end
 
 def collect_from_entity(entity)

@@ -1,4 +1,5 @@
 require 'solar_integration/progress.rb'
+require 'solar_integration/angle_conversion.rb'
 
 # Simpler hashes for comparison
 class NoHashMap
@@ -91,13 +92,8 @@ end
 # determines the range of polar angle that a polygon covers
 # the polygon needs to be planar and convex for the
 # north/south pole check to work
-class PolarHashInterval
-  attr_reader :hash_array
-  
-  def self.angular_resolution=(angular_resolution)
-    @angular_resolution = angular_resolution * 2 * Math::PI / 180
-  end
-  @angular_resolution = 10 * 2 * Math::PI / 180
+class PolarMinMax
+  attr_reader :pl_min, :pl_max
   
   @@vertical = Geom::Vector3d.new(0,0,1)
   
@@ -113,15 +109,13 @@ class PolarHashInterval
       @normals.collect! {|n| n.reverse}
     end
     # polygon surrounds north pole
-    if @normals.collect{|n| n[2]>0}.reduce(:&)
+    if @normals.all?{|n| n[2]>0}
       @pl_min = 0
     end
     # polygon surrounds south pole
-    if @normals.collect{|n| n[2]<=0}.reduce(:&)
+    if @normals.all?{|n| n[2]<0}
       @pl_max = Math::PI
     end
-    
-    calculate_hash_array
   end
   
   def calculate_segment_angles(p1, p2)
@@ -145,13 +139,28 @@ class PolarHashInterval
     return angles.minmax
   end
   
-  def self.calculate_hash(vector)
-    return self.as_hash(self.calculate_polar_angle(vector))
-  end
-  
   def self.calculate_polar_angle(vector)
     rho = Math::hypot(vector[0], vector[1])
     return Math::atan2(rho, vector[2])
+  end
+end
+
+# from min max angles to hash interval
+class PolarHashInterval < PolarMinMax
+  attr_reader :hash_array
+  
+  def self.angular_resolution=(angular_resolution)
+    @angular_resolution = to_radian(angular_resolution)
+  end
+  @angular_resolution = to_radian(10)
+  
+  def initialize(polygon)
+    super(polygon)
+    calculate_hash_array
+  end
+  
+  def self.calculate_hash(vector)
+    return self.as_hash(self.calculate_polar_angle(vector))
   end
   
   def self.as_hash(polar_angle)
@@ -163,15 +172,10 @@ class PolarHashInterval
   end
 end
 
-# convert azimuth angles of a polygon
-# to an array of integer hashes
-class AzimuthHashInterval
-  attr_reader :hash_array
-  
-  def self.angular_resolution=(angular_resolution)
-    @angular_resolution = angular_resolution * 2 * Math::PI / 180
-  end
-  @angular_resolution = 10 * 2 * Math::PI / 180
+# determines range of azimuth angles covered by polygon
+# if az_min>az_max the interval spans the 2pi angle
+class AzimuthMinMax
+  attr_reader :az_min, :az_max
   
   def initialize(polygon)
     @az_current = self.class.calculate_azimuth(polygon[0])
@@ -180,11 +184,6 @@ class AzimuthHashInterval
     polygon.each {|p| add(p)}
     add(polygon[0]) # close the polygon
     adjust_interval
-    calculate_hash_array
-  end
-  
-  def self.calculate_hash(point)
-    return self.as_hash(self.calculate_azimuth(point))
   end
   
   def self.calculate_azimuth(point)
@@ -194,10 +193,6 @@ class AzimuthHashInterval
     else
       return az + 2*Math::PI
     end
-  end
-  
-  def self.as_hash(az)
-    return (az/@angular_resolution).floor
   end
   
   # adding segments while keeping track of how many times we looped
@@ -234,6 +229,29 @@ class AzimuthHashInterval
       @az_min %= 2*Math::PI
     end
   end
+end
+
+# from min max angles to hash interval
+class AzimuthHashInterval < AzimuthMinMax
+  attr_reader :hash_array
+  
+  def self.angular_resolution=(angular_resolution)
+    @angular_resolution = to_radian(angular_resolution)
+  end
+  @angular_resolution = to_radian(10)
+  
+  def initialize(polygon)
+    super(polygon)
+    calculate_hash_array
+  end
+  
+  def self.calculate_hash(point)
+    return self.as_hash(self.calculate_azimuth(point))
+  end
+  
+  def self.as_hash(az)
+    return (az/@angular_resolution).floor
+  end
   
   def calculate_hash_array
     if @az_min<=@az_max
@@ -265,8 +283,8 @@ class HashMapVisualizationSphere
   end
   
   def angles_to_vector(azimuth, polar)
-    azimuth *= 2*Math::PI / 360
-    polar *= 2*Math::PI / 360
+    azimuth = to_radian(azimuth)
+    polar = to_radian(polar)
     x = @radius * Math::sin(polar) * Math::cos(azimuth)
     y = @radius * Math::sin(polar) * Math::sin(azimuth)
     z = @radius * Math::cos(polar)
