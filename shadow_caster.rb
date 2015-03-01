@@ -12,15 +12,32 @@ class ShadowCaster
   def initialize(polygons, face)
     # only consider polygons above face plane
     @polygons = polygons.select{|p| p.any? {|v| ORIGIN.vector_to(v)%face.normal>0}}
+    @rel_polgs_t = 0
+    @shadow_polgs_t = 0
+    @add_polgs_t = 0
+    @cr_map_t = 0
   end
   
   def prepare_position(position)
+    t1 = Time.new
     relative_polygons = calculate_relative_polygons(position)
+    t2 = Time.new
     shadow_polygons = find_shadow_polygons(relative_polygons)
+    t3 = Time.new
     @hash_map = SphericalHashMap.new(10,10)
+    t4 = Time.new
     for shadow_polygon in shadow_polygons
       @hash_map.add_value(shadow_polygon, Pyramid.new(shadow_polygon))
     end
+    t5 = Time.new
+    @rel_polgs_t += t2-t1
+    @shadow_polgs_t += t3-t2
+    @cr_map_t += t4-t3
+    @add_polgs_t += t5-t4
+  end
+  
+  def print_times
+    puts "Calc rel ps #{@rel_polgs_t}, Find shdw ps #{@shadow_polgs_t}, Create map #{@cr_map_t}, Add ps to map #{@add_polgs_t}"
   end
   
   def has_shadow(sun_direction)

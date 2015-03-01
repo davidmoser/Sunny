@@ -78,13 +78,22 @@ class SolarIntegration
     shadow_caster = ShadowCaster.new(polygons, face)
     data_collectors = @data_collector_classes.collect { |c| c.new(grid) }
     
+    prep_time = 0
+    render_time = 0
     progress = Progress.new(grid.points.length, 'Integrating irradiances...')
     for point in grid.points
+      t1 = Time.new
       shadow_caster.prepare_position(point)
+      t2 = Time.new
       data_collectors.each { |c| c.current_point=point }
       render_point(grid.normal, shadow_caster, data_collectors)
+      t3 = Time.new
+      prep_time += t2-t1
+      render_time += t3-t2
       progress.work
     end
+    puts "Prep time #{prep_time}, Render time #{render_time}"
+    shadow_caster.print_times
     data_collectors.each { |c| c.wrapup }
   end
   
