@@ -10,13 +10,13 @@ class ShadowCaster
   attr_accessor :hash_map
   
   def initialize(polygons, face)
-    @polygons = polygons
-    @normal = face.normal
+    # only consider polygons above face plane
+    @polygons = polygons.select{|p| p.any? {|v| ORIGIN.vector_to(v)%face.normal>0}}
   end
   
   def prepare_position(position)
     relative_polygons = calculate_relative_polygons(position)
-    shadow_polygons = find_shadow_polygons(relative_polygons, @normal)
+    shadow_polygons = find_shadow_polygons(relative_polygons)
     @hash_map = SphericalHashMap.new(10,10)
     for shadow_polygon in shadow_polygons
       @hash_map.add_value(shadow_polygon, Pyramid.new(shadow_polygon))
@@ -68,19 +68,21 @@ end
 
 # for the shadow cast onto the face only faces that are above the horizon
 # and on the front side of the face are relevant
-def find_shadow_polygons(polygons, normal)
-  return polygons.select{|p| is_shadow_polygon(p, normal)}
+def find_shadow_polygons(polygons)
+  return polygons.select{|p| is_shadow_polygon(p)}
 end
 
-def is_shadow_polygon(polygon, normal)
-  # polygon is below the plane of the face
-  return false if polygon.all?{|v| v%normal<=0}
-  
-  # polygon is below horizontal inclination cut off angle
+def is_shadow_polygon(polygon)
+  # polygon is below horizontal plane
+  return false if polygon.all? {|p| p[2]<0}
+
+  # polygon is below (horizontal) inclanation cutoff
   polar_min_max = PolarMinMax.new(polygon)
   return false if 90 - to_degree(polar_min_max.pl_min) <= INCLINATION_CUTOFF
   
   # polygon is not in any possible sun_direction
+  # ... wouldn't help much since hash map does same job with same effort
+  # rearranging hash map for 'solar north pole' seems sensible, performance boost not clear
   ##TODO
   
   return true
