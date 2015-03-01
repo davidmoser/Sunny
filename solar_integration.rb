@@ -100,7 +100,7 @@ class SolarIntegration
       render_time += t3-t2
       progress.work
     end
-    puts "Prep time #{prep_time}, Render time #{render_time}"
+    puts "Prep time #{prep_time.round(2)}, Render time #{render_time.round(2)}"
     shadow_caster.print_times
     data_collectors.each { |c| c.wrapup }
   end

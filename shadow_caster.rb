@@ -13,10 +13,10 @@ class ShadowCaster
     @hash_map_class = configuration.hash_map_class
     @inclination_cutoff = configuration.inclination_cutoff
     @polygons = polygons.select{|p| p.any? {|v| ORIGIN.vector_to(v)%face.normal>0}}
-    @rel_polgs_t = 0
-    @shadow_polgs_t = 0
-    @add_polgs_t = 0
-    @cr_map_t = 0
+    @relative_polygon_t = 0
+    @shadow_polygon_t = 0
+    @map_creation_t = 0
+    @adding_to_map_t = 0
   end
   
   def prepare_position(position)
@@ -26,19 +26,19 @@ class ShadowCaster
     shadow_polygons = find_shadow_polygons(relative_polygons)
     t3 = Time.new
     @hash_map = @hash_map_class.new(10)
-    t4 = Time.new
     for shadow_polygon in shadow_polygons
       @hash_map.add_value(shadow_polygon, Pyramid.new(shadow_polygon))
     end
-    t5 = Time.new
-    @rel_polgs_t += t2-t1
-    @shadow_polgs_t += t3-t2
-    @cr_map_t += t4-t3
-    @add_polgs_t += t5-t4
+    t4 = Time.new
+    @relative_polygon_t += t2-t1
+    @shadow_polygon_t += t3-t2
+    @adding_to_map_t += t4-t3
   end
   
   def print_times
-    puts "Calc rel ps #{@rel_polgs_t}, Find shdw ps #{@shadow_polgs_t}, Create map #{@cr_map_t}, Add ps to map #{@add_polgs_t}"
+    puts "Calculate relative polygons #{@relative_polygon_t.round(2)}, "\
+      "Find shadow polygons #{@shadow_polygon_t.round(2)}, "\
+      "Add to map #{@adding_to_map_t.round(2)}"
   end
   
   def has_shadow(sun_direction)
