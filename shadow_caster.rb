@@ -3,14 +3,15 @@ require 'solar_integration/angle_conversion.rb'
 
 Z_AXIS = Geom::Vector3d.new(0,0,1)
 ORIGIN = Geom::Point3d.new(0,0,0)
-INCLINATION_CUTOFF = 10
 
 # creates a new @hash_map for each position and fills it with pyramids
 class ShadowCaster
   attr_accessor :hash_map
   
-  def initialize(polygons, face)
+  def initialize(polygons, face, configuration)
     # only consider polygons above face plane
+    @hash_map_class = configuration.hash_map_class
+    @inclination_cutoff = configuration.inclination_cutoff
     @polygons = polygons.select{|p| p.any? {|v| ORIGIN.vector_to(v)%face.normal>0}}
     @rel_polgs_t = 0
     @shadow_polgs_t = 0
@@ -24,7 +25,7 @@ class ShadowCaster
     t2 = Time.new
     shadow_polygons = find_shadow_polygons(relative_polygons)
     t3 = Time.new
-    @hash_map = SphericalHashMap.new(10,10)
+    @hash_map = @hash_map_class.new(10)
     t4 = Time.new
     for shadow_polygon in shadow_polygons
       @hash_map.add_value(shadow_polygon, Pyramid.new(shadow_polygon))
@@ -51,6 +52,28 @@ class ShadowCaster
     @polygons.collect do |polygon|
       polygon.collect {|p| position.vector_to(p)}
     end
+  end
+  
+  # for the shadow cast onto the face only faces that are above the horizon
+  # and on the front side of the face are relevant
+  def find_shadow_polygons(polygons)
+    return polygons.select{|p| is_shadow_polygon(p)}
+  end
+
+  def is_shadow_polygon(polygon)
+    # polygon is below horizontal plane
+    return false if polygon.all? {|p| p[2]<0}
+
+    # polygon is below (horizontal) inclanation cutoff
+    polar_min_max = PolarMinMax.new(polygon)
+    return false if 90 - to_degree(polar_min_max.pl_min) <= @inclination_cutoff
+
+    # polygon is not in any possible sun_direction
+    # ... wouldn't help much since hash map does same job with same effort
+    # rearranging hash map for 'solar north pole' seems sensible, performance boost not clear
+    ##TODO
+
+    return true
   end
 end
 
@@ -83,24 +106,3 @@ class Pyramid
   end
 end
 
-# for the shadow cast onto the face only faces that are above the horizon
-# and on the front side of the face are relevant
-def find_shadow_polygons(polygons)
-  return polygons.select{|p| is_shadow_polygon(p)}
-end
-
-def is_shadow_polygon(polygon)
-  # polygon is below horizontal plane
-  return false if polygon.all? {|p| p[2]<0}
-
-  # polygon is below (horizontal) inclanation cutoff
-  polar_min_max = PolarMinMax.new(polygon)
-  return false if 90 - to_degree(polar_min_max.pl_min) <= INCLINATION_CUTOFF
-  
-  # polygon is not in any possible sun_direction
-  # ... wouldn't help much since hash map does same job with same effort
-  # rearranging hash map for 'solar north pole' seems sensible, performance boost not clear
-  ##TODO
-  
-  return true
-end

@@ -25,7 +25,6 @@ class TotalIrradianceSquares < DataCollector
     Sketchup.active_model.start_operation('Creating squares', true)
     @squares = Hash.new
     grid.points.each do |p|
-      # lift by 1cm so not to intersect with original face
       @squares[p] = Square.new(@group, p, grid.side1, grid.side2)
       progress.work
     end
@@ -44,6 +43,7 @@ class TotalIrradianceSquares < DataCollector
     Sketchup.active_model.start_operation('Coloring squares', true)
     @squares.values.each do |s|
       s.face.material=color_bar.to_color(s.irradiance)
+      s.face.set_attribute 'solar_integration', 'total_irradiance', s.irradiance
       progress.work
     end
     Sketchup.active_model.commit_operation

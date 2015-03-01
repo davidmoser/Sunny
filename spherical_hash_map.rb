@@ -1,9 +1,23 @@
 require 'solar_integration/progress.rb'
 require 'solar_integration/angle_conversion.rb'
 
+class AbstractHashMap
+  def initialize(resolution)
+    raise 'need to implement' 
+  end
+  
+  def add_value(polygon, value)
+    raise 'need to implement' 
+  end
+  
+  def get_values(point)
+    raise 'need to implement' 
+  end
+end
+
 # Simpler hashes for comparison
-class NoHashMap
-  def initialize
+class NoHashMap < AbstractHashMap
+  def initialize(resolution)
     @array = []
   end
   
@@ -16,7 +30,7 @@ class NoHashMap
   end
 end
 
-class AzimuthHashMap
+class AzimuthHashMap < AbstractHashMap
   def initialize(resolution)
     @map = Hash.new{|m,k| m[k]=[]} # empty list is the default
     @azimuth_class = Class.new(AzimuthHashInterval)
@@ -34,7 +48,7 @@ class AzimuthHashMap
   end
 end
 
-class PolarHashMap
+class PolarHashMap < AbstractHashMap
   def initialize(resolution)
     @map = Hash.new{|m,k| m[k]=[]} # empty list is the default
     @polar_class = Class.new(PolarHashInterval)
@@ -55,13 +69,13 @@ end
 # categorize and retrieve values according to the spherical angles that the
 # polygon covers (as a chain of line segments)
 # each value may up in multiple 'angle-bins' covered by its chain
-class SphericalHashMap
-  def initialize(az_resolution, pl_resolution)
+class SphericalHashMap < AbstractHashMap
+  def initialize(resolution)
     @map = Hash.new{|m,k| m[k]=[]} # empty list is the default
     @azimuth_class = Class.new(AzimuthHashInterval)
-    @azimuth_class.angular_resolution = az_resolution
+    @azimuth_class.angular_resolution = resolution
     @polar_class = Class.new(PolarHashInterval)
-    @polar_class.angular_resolution = pl_resolution
+    @polar_class.angular_resolution = resolution
   end
   
   def add_value(polygon, value)

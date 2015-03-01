@@ -6,6 +6,7 @@ require 'solar_integration/shadow_caster.rb'
 require 'solar_integration/sun_data.rb'
 require 'solar_integration/data_collector.rb'
 require 'solar_integration/polygon_collector.rb'
+require 'solar_integration/configuration.rb'
 
 SKETCHUP_CONSOLE.show
 
@@ -41,11 +42,18 @@ UI.menu('Plugins').add_item('Print polygons') {
   end
 }
 
+UI.menu('Plugins').add_item('Configuration ...') {
+  $solar_integration.update_configuration
+}
+
 class SolarIntegration
   def initialize
-    @grid_length = 10 ##TODO: is that always cm?
     @sun_data = SunData.new
-    @data_collector_classes = [PolarAngleIrradianceHistogram, TotalIrradianceSquares]
+    @configuration = Configuration.new
+  end
+  
+  def update_configuration
+    @configuration.update
   end
 
   def visualize_sun_states(face)
@@ -66,17 +74,17 @@ class SolarIntegration
     center = Geom::Point3d.new(center.to_a) + face.normal.normalize
     
     polygons = collect_model_polygons(Sketchup.active_model)
-    shadow_caster = ShadowCaster.new(polygons, face)
+    shadow_caster = ShadowCaster.new(polygons, face, @configuration)
     shadow_caster.prepare_position(center)
     HashMapVisualizationSphere.new(face.parent.entities, center, shadow_caster.hash_map, 10, 10)
   end
   
   def integrate(face)
-    grid = Grid.new(face, @grid_length)
+    grid = Grid.new(face, @configuration.grid_length)
     
     polygons = collect_model_polygons(Sketchup.active_model)
-    shadow_caster = ShadowCaster.new(polygons, face)
-    data_collectors = @data_collector_classes.collect { |c| c.new(grid) }
+    shadow_caster = ShadowCaster.new(polygons, face, @configuration)
+    data_collectors = @configuration.active_data_collectors.collect { |c| c.new(grid) }
     
     prep_time = 0
     render_time = 0
