@@ -1,9 +1,10 @@
 
 class Configuration
-  attr_accessor :hash_map_class, :grid_length, :active_data_collectors, :inclination_cutoff
+  attr_accessor :hash_map_class, :grid_length, :active_data_collectors, :inclination_cutoff, :sub_divisions
   
   def initialize
-    @grid_length = 10
+    @grid_length = 100
+    @sub_divisions = 10
     @inclination_cutoff = 10
     @hash_map_class = SphericalHashMap
     @active_data_collectors = [PolarAngleIrradianceHistogram, TotalIrradianceSquares]
@@ -23,6 +24,7 @@ class Configuration
     @lists = []
     
     add_prompt 'Grid length (cm)', @grid_length, ''
+    add_prompt 'Number of sub divisions', @sub_divisions, ''
     add_prompt 'Inclination cutoff (degree)', @inclination_cutoff, ''
     
     @hash_map_classes = ObjectSpace.each_object(Class).select { |c| c < AbstractHashMap }
@@ -37,11 +39,12 @@ class Configuration
     return if not input
     
     @grid_length = input[0].to_i
-    @inclination_cutoff = input[1].to_i
-    @hash_map_class = @hash_map_classes.find{|c| c.to_s==input[2]}
+    @sub_divisions = input[1].to_i
+    @inclination_cutoff = input[2].to_i
+    @hash_map_class = @hash_map_classes.find{|c| c.to_s==input[3]}
     
     @active_data_collectors = []
-    i = 3
+    i = 4
     @data_collectors.each do |dc|
       @active_data_collectors.push dc if input[i]=='active'
       i += 1

@@ -21,27 +21,29 @@ class TotalIrradianceSquares < DataCollector
   def initialize(grid)
     @group = grid.face.parent.entities.add_group
     
-    progress = Progress.new(grid.points.length, 'Creating squares...')
-    Sketchup.active_model.start_operation('Creating squares', true)
-    @squares = Hash.new
-    grid.points.each do |p|
-      @squares[p] = Square.new(@group, p, grid.side1, grid.side2)
-      progress.work
+    progress = Progress.new(grid.number_of_subsquares, 'Creating tiles...')
+    Sketchup.active_model.start_operation('Creating tiles', true)
+    @tiles = Hash.new
+    grid.squares.each do |square|
+      square.points.each do |p|
+        @tiles[p] = Tile.new(@group, p, grid.subside1, grid.subside2)
+        progress.work
+      end
     end
     Sketchup.active_model.commit_operation
   end
   
   def put(sun_state, irradiance)
     return if not irradiance
-    @squares[@current_point].irradiance += irradiance
+    @tiles[@current_point].irradiance += irradiance
   end
   
   def wrapup
-    minmax = @squares.values.collect{|s| s.irradiance}.minmax
+    minmax = @tiles.values.collect{|s| s.irradiance}.minmax
     color_bar = ColorBar.new(*minmax)
-    progress = Progress.new(@squares.length, 'Coloring squares...')
-    Sketchup.active_model.start_operation('Coloring squares', true)
-    @squares.values.each do |s|
+    progress = Progress.new(@tiles.length, 'Coloring tiles...')
+    Sketchup.active_model.start_operation('Coloring tiles', true)
+    @tiles.values.each do |s|
       s.face.material=color_bar.to_color(s.irradiance)
       s.face.set_attribute 'solar_integration', 'total_irradiance', s.irradiance
       progress.work
@@ -52,7 +54,7 @@ end
 
 # a square has a @center, @irradiance information and the reference
 # to its visual representation @face
-class Square
+class Tile
   attr_accessor :irradiance, :face
   
   def initialize(group, center, side1, side2)

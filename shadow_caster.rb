@@ -9,36 +9,43 @@ class ShadowCaster
   attr_accessor :hash_map
   
   def initialize(polygons, face, configuration)
+    @configuration = configuration
     # only consider polygons above face plane
-    @hash_map_class = configuration.hash_map_class
-    @inclination_cutoff = configuration.inclination_cutoff
     @polygons = polygons.select{|p| p.any? {|v| ORIGIN.vector_to(v)%face.normal>0}}
     @relative_polygon_t = 0
-    @shadow_polygon_t = 0
-    @map_creation_t = 0
     @adding_to_map_t = 0
+    @center_relative_polygon_t = 0
+    @center_shadow_polygon_t = 0
+  end
+  
+  def prepare_center(center)
+    t1 = Time.new
+    relative_polygons = calculate_relative_polygons(center)
+    t2 = Time.new
+    @shadow_polygons = find_shadow_polygons(relative_polygons)
+    t3 = Time.new
+    @center_relative_polygon_t += t2-t1
+    @center_shadow_polygon_t += t3-t2
   end
   
   def prepare_position(position)
     t1 = Time.new
     relative_polygons = calculate_relative_polygons(position)
     t2 = Time.new
-    shadow_polygons = find_shadow_polygons(relative_polygons)
-    t3 = Time.new
-    @hash_map = @hash_map_class.new(10)
-    for shadow_polygon in shadow_polygons
+    @hash_map = @configuration.hash_map_class.new(10)
+    for shadow_polygon in relative_polygons
       @hash_map.add_value(shadow_polygon, Pyramid.new(shadow_polygon))
     end
-    t4 = Time.new
+    t3 = Time.new
     @relative_polygon_t += t2-t1
-    @shadow_polygon_t += t3-t2
-    @adding_to_map_t += t4-t3
+    @adding_to_map_t += t3-t2
   end
   
   def print_times
-    puts "Calculate relative polygons #{@relative_polygon_t.round(2)}, "\
-      "Find shadow polygons #{@shadow_polygon_t.round(2)}, "\
-      "Add to map #{@adding_to_map_t.round(2)}"
+    puts "Center: calculate relative polygons #{@center_relative_polygon_t.round(2)}, "\
+      "find shadow polygons #{@center_shadow_polygon_t.round(2)}, "
+    puts "Position: calculate relative polygons #{@relative_polygon_t.round(2)}, "\
+      "add to map #{@adding_to_map_t.round(2)}"
   end
   
   def has_shadow(sun_direction)
@@ -61,12 +68,12 @@ class ShadowCaster
   end
 
   def is_shadow_polygon(polygon)
-    # polygon is below horizontal plane
-    return false if polygon.all? {|p| p[2]<0}
-
+    distance = polygon.collect{|v| v.length}.min
+    angle_error = to_degree(@configuration.grid_length / distance)
+    
     # polygon is below (horizontal) inclanation cutoff
     polar_min_max = PolarMinMax.new(polygon)
-    return false if 90 - to_degree(polar_min_max.pl_min) <= @inclination_cutoff
+    return false if 90 - to_degree(polar_min_max.pl_min) <= @configuration.inclination_cutoff - angle_error
 
     # polygon is not in any possible sun_direction
     # ... wouldn't help much since hash map does same job with same effort

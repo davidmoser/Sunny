@@ -80,27 +80,27 @@ class SolarIntegration
   end
   
   def integrate(face)
-    grid = Grid.new(face, @configuration.grid_length)
+    grid = Grid.new(face, @configuration.grid_length, @configuration.sub_divisions)
     
     polygons = collect_model_polygons(Sketchup.active_model)
     shadow_caster = ShadowCaster.new(polygons, face, @configuration)
     data_collectors = @configuration.active_data_collectors.collect { |c| c.new(grid) }
     
-    prep_time = 0
     render_time = 0
-    progress = Progress.new(grid.points.length, 'Integrating irradiances...')
-    for point in grid.points
-      t1 = Time.new
-      shadow_caster.prepare_position(point)
-      t2 = Time.new
-      data_collectors.each { |c| c.current_point=point }
-      render_point(grid.normal, shadow_caster, data_collectors)
-      t3 = Time.new
-      prep_time += t2-t1
-      render_time += t3-t2
-      progress.work
+    progress = Progress.new(grid.number_of_subsquares, 'Integrating irradiances...')
+    for square in grid.squares
+      shadow_caster.prepare_center(square.center)
+      for point in square.points
+        data_collectors.each { |c| c.current_point=point }
+        shadow_caster.prepare_position(point)
+        t1 = Time.new
+        render_point(grid.normal, shadow_caster, data_collectors)
+        t2 = Time.new
+        render_time += t2-t1
+        progress.work 
+      end
     end
-    puts "Prep time #{prep_time.round(2)}, Render time #{render_time.round(2)}"
+    puts "Render time #{render_time.round(2)}"
     shadow_caster.print_times
     data_collectors.each { |c| c.wrapup }
   end
