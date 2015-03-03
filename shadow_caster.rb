@@ -6,46 +6,25 @@ ORIGIN = Geom::Point3d.new(0,0,0)
 
 # creates a new @hash_map for each position and fills it with pyramids
 class ShadowCaster
-  attr_accessor :hash_map
+  attr_accessor :hash_map, :pyramids
   
   def initialize(polygons, face, configuration)
     @configuration = configuration
     # only consider polygons above face plane
     @polygons = polygons.select{|p| p.any? {|v| ORIGIN.vector_to(v)%face.normal>0}}
-    @relative_polygon_t = 0
-    @adding_to_map_t = 0
-    @center_relative_polygon_t = 0
-    @center_shadow_polygon_t = 0
+    @pyramids = @polygons.collect{|p| Pyramid.new(p, configuration)}
   end
   
   def prepare_center(center)
-    t1 = Time.new
-    relative_polygons = calculate_relative_polygons(center)
-    t2 = Time.new
-    @shadow_polygons = find_shadow_polygons(relative_polygons)
-    t3 = Time.new
-    @center_relative_polygon_t += t2-t1
-    @center_shadow_polygon_t += t3-t2
+    @shadow_pyramids = @pyramids.select{|p| p.is_shadow_pyramid(center)}
   end
   
   def prepare_position(position)
-    t1 = Time.new
-    relative_polygons = calculate_relative_polygons(position)
-    t2 = Time.new
     @hash_map = @configuration.hash_map_class.new(10)
-    for shadow_polygon in relative_polygons
-      @hash_map.add_value(shadow_polygon, Pyramid.new(shadow_polygon))
+    for pyramid in @shadow_pyramids
+      pyramid.calculate_normals(position)
+      @hash_map.add_value(pyramid.relative_polygon, pyramid)
     end
-    t3 = Time.new
-    @relative_polygon_t += t2-t1
-    @adding_to_map_t += t3-t2
-  end
-  
-  def print_times
-    puts "Center: calculate relative polygons #{@center_relative_polygon_t.round(2)}, "\
-      "find shadow polygons #{@center_shadow_polygon_t.round(2)}, "
-    puts "Position: calculate relative polygons #{@relative_polygon_t.round(2)}, "\
-      "add to map #{@adding_to_map_t.round(2)}"
   end
   
   def has_shadow(sun_direction)
@@ -55,24 +34,28 @@ class ShadowCaster
     return false
   end
   
-  def calculate_relative_polygons(position)
-    @polygons.collect do |polygon|
-      polygon.collect {|p| position.vector_to(p)}
-    end
+end
+
+class Pyramid
+  attr_reader :polygon, :relative_polygon
+  
+  def initialize(polygon, configuration)
+    @configuration = configuration
+    @polygon = polygon
   end
   
-  # for the shadow cast onto the face only faces that are above the horizon
-  # and on the front side of the face are relevant
-  def find_shadow_polygons(polygons)
-    return polygons.select{|p| is_shadow_polygon(p)}
+  def update_relative_polygon(position)
+    @relative_polygon = @polygon.collect {|p| position.vector_to(p)}
   end
-
-  def is_shadow_polygon(polygon)
-    distance = polygon.collect{|v| v.length}.min
-    angle_error = to_degree(@configuration.grid_length / distance)
+  
+  # check if the polygon might cast a shadow on square with center
+  def is_shadow_pyramid(center)
+    update_relative_polygon(center)
+    distance = @relative_polygon.collect{|v| v.length}.min
+    angle_error = to_degree(@configuration.grid_length / 2 / distance)
     
     # polygon is below (horizontal) inclanation cutoff
-    polar_min_max = PolarMinMax.new(polygon)
+    polar_min_max = PolarMinMax.new(@relative_polygon)
     return false if 90 - to_degree(polar_min_max.pl_min) <= @configuration.inclination_cutoff - angle_error
 
     # polygon is not in any possible sun_direction
@@ -82,21 +65,20 @@ class ShadowCaster
 
     return true
   end
-end
-
-class Pyramid
+  
   # the position (apex) and each mesh triangle (base) in 
   # shadow_faces define a pyramid, if the sun is 'in the pyramid direction',
   # then the mesh triangle casts a shadow onto center_point.
   # the pyramid (for us) is defined by the array of its three inward side plane
   # normals (we don't need the base)
-  def initialize(polygon)
+  def calculate_normals(position)
+    update_relative_polygon(position)
     @normals = []
-    polygon.each.with_index do |p,i|
-      @normals.push p*polygon[(i+1)%polygon.length]
+    @relative_polygon.each.with_index do |p,i|
+      @normals.push p*@relative_polygon[(i+1)%@polygon.length]
     end
     # sign checking/fixing
-    if @normals[0] % polygon[2] < 0
+    if @normals[0] % @relative_polygon[2] < 0
       @normals.collect! {|n| n.reverse}
     end
   end
@@ -110,6 +92,10 @@ class Pyramid
       return false if normal % sun_direction < 0
     end
     return true
+  end
+  
+  def visualize(entities, base)
+    @polygon.each{|p| entities.add_edges base, p}
   end
 end
 

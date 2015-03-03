@@ -7,6 +7,7 @@ require 'solar_integration/sun_data.rb'
 require 'solar_integration/data_collector.rb'
 require 'solar_integration/polygon_collector.rb'
 require 'solar_integration/configuration.rb'
+require 'set'
 
 SKETCHUP_CONSOLE.show
 
@@ -42,6 +43,14 @@ UI.menu('Plugins').add_item('Print polygons') {
   end
 }
 
+UI.menu('Plugins').add_item('Visualize shadow pyramids') {
+  model = Sketchup.active_model
+  
+  model.selection.select{|f|f.typename=='Face'}.each do |f|
+    $solar_integration.visualize_shadow_pyramids(f)
+  end
+}
+
 UI.menu('Plugins').add_item('Configuration ...') {
   $solar_integration.update_configuration
 }
@@ -67,16 +76,38 @@ class SolarIntegration
   end
   
   def visualize_hash_map(face)
+    center = find_face_center(face)
+    polygons = collect_model_polygons(Sketchup.active_model)
+    shadow_caster = ShadowCaster.new(polygons, face, @configuration)
+    shadow_caster.prepare_center(center)
+    shadow_caster.prepare_position(center)
+    HashMapVisualizationSphere.new(face.parent.entities, center, shadow_caster.hash_map, 10, 10)
+  end
+  
+  def visualize_shadow_pyramids(face)
+    center = find_face_center(face)
+    polygons = collect_model_polygons(Sketchup.active_model)
+    shadow_caster = ShadowCaster.new(polygons, face, @configuration)
+    shadow_caster.prepare_center(center)
+    shadow_caster.prepare_position(center)
+    group = face.parent.entities.add_group
+    pyramids = Set.new
+    shadow_caster.hash_map.all_values.each{|a| a.each{|p|pyramids.add(p)}}
+    progress = Progress.new(pyramids.length, 'Drawing pyramids...')
+    Sketchup.active_model.start_operation('Drawing pyramids', true)
+    pyramids.each do |p|
+      p.visualize(group.entities, center)
+      progress.work
+    end
+    Sketchup.active_model.commit_operation
+  end
+  
+  def find_face_center(face)
     # center of gravity of vertices
     center = face.vertices
       .collect{|v|Geom::Vector3d.new v.position.to_a}.reduce(:+)
       .transform(1.0/face.vertices.length)
-    center = Geom::Point3d.new(center.to_a) + face.normal.normalize
-    
-    polygons = collect_model_polygons(Sketchup.active_model)
-    shadow_caster = ShadowCaster.new(polygons, face, @configuration)
-    shadow_caster.prepare_position(center)
-    HashMapVisualizationSphere.new(face.parent.entities, center, shadow_caster.hash_map, 10, 10)
+    return Geom::Point3d.new(center.to_a) + face.normal.normalize
   end
   
   def integrate(face)
@@ -86,23 +117,31 @@ class SolarIntegration
     shadow_caster = ShadowCaster.new(polygons, face, @configuration)
     data_collectors = @configuration.active_data_collectors.collect { |c| c.new(grid) }
     
-    render_time = 0
+    render_t = 0
+    prepare_center_t = 0
+    prepare_position_t = 0
     progress = Progress.new(grid.number_of_subsquares, 'Integrating irradiances...')
     for square in grid.squares
+      t1 = Time.new
       shadow_caster.prepare_center(square.center)
+      t2 = Time.new
       for point in square.points
         data_collectors.each { |c| c.current_point=point }
+        t3 = Time.new
         shadow_caster.prepare_position(point)
-        t1 = Time.new
+        t4 = Time.new
         render_point(grid.normal, shadow_caster, data_collectors)
-        t2 = Time.new
-        render_time += t2-t1
-        progress.work 
+        t5 = Time.new
+        progress.work
+        prepare_position_t += t4-t3
+        render_t += t5-t4
       end
+      prepare_center_t += t2-t1
     end
-    puts "Render time #{render_time.round(2)}"
-    shadow_caster.print_times
     data_collectors.each { |c| c.wrapup }
+    puts "prepare center #{prepare_center_t.round(2)}, "\
+      "prepare position #{prepare_position_t.round(2)}, "\
+      "render time #{render_t.round(2)}"
   end
   
   def render_point(normal, shadow_caster, data_collectors)
