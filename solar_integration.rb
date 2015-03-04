@@ -72,7 +72,7 @@ class SolarIntegration
       .transform(1.0/face.vertices.length)
     center = Geom::Point3d.new center.to_a
     
-    SunDataVisualizationSphere.new(face.parent.entities, center, @sun_data)
+    SunDataVisualizationSphere.new(face.parent.entities, center)
   end
   
   def visualize_hash_map(face)

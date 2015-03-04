@@ -13,21 +13,21 @@ class SunData
     si = Sketchup.active_model.shadow_info
     t_old = si['ShadowTime']
     
-    t = Time.new(2014)
-    t_end = Time.new(2015)
-    while t<t_end
-      si['ShadowTime'] = t
-      @states.push SunState.new(si['SunDirection'],t, 1)
-      t += 60 * 60
-    end
-    
-#    (1..12).each do |month|
-#      (1..23).each do |hour|
-#        t = Time.new(2014, month, 01, hour)
-#        si['ShadowTime'] = t
-#        @states.push SunState.new(si['SunDirection'],t, 1)
-#      end
+#    t = Time.new(2014)
+#    t_end = Time.new(2015)
+#    while t<t_end
+#      si['ShadowTime'] = t
+#      @states.push SunState.new(si['SunDirection'],t, 1)
+#      t += 60 * 60
 #    end
+    
+    (1..12).each do |month|
+      (1..23).each do |hour|
+        t = Time.new(2014, month, 01, hour)
+        si['ShadowTime'] = t
+        @states.push SunState.new(si['SunDirection'],t, 1)
+      end
+    end
     
     si['ShadowTime'] = t_old # restore initial time
     # generate states for times
@@ -47,13 +47,20 @@ end
 
 # to debug the hash map
 class SunDataVisualizationSphere
-  def initialize(entities, center, sun_data)
+  def initialize(entities, center)
+    sun_data = SunData.new
     @group = entities.add_group
-    progress = Progress.new(sun_data.states.length, 'Creating sun data sphere...')
     @radius = 30
+    
+    progress = Progress.new(sun_data.states.length, 'Creating sun data sphere...')
+    Sketchup.active_model.start_operation('Creating sund data sphere', true)
+    p_old = center
     sun_data.states.each do |s|
-      @group.entities.add_text('.', center + s.vector.transform(@radius)) 
+      p_new = center + s.vector.transform(@radius)
+      @group.entities.add_edges(p_old, p_new)
+      p_old = p_new
       progress.work
     end
+    Sketchup.active_model.commit_operation
   end
 end

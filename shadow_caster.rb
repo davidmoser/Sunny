@@ -1,18 +1,29 @@
 require 'solar_integration/spherical_hash_map.rb'
 require 'solar_integration/angle_conversion.rb'
 
+X_AXIS = Geom::Vector3d.new(1,0,0)
 Z_AXIS = Geom::Vector3d.new(0,0,1)
 ORIGIN = Geom::Point3d.new(0,0,0)
+ECLIPTIC_ANGLE = to_radian(23.4)
 
 # creates a new @hash_map for each position and fills it with pyramids
 class ShadowCaster
   attr_accessor :hash_map, :pyramids
   
   def initialize(polygons, face, configuration)
+    # sun_transformation transforms solar north to z axis
+    # in that coordinate system the suns inclination lies between +-ECLIPTIC_ANGLE
+    si = Sketchup.active_model.shadow_info
+    sun_angle = to_radian(90 - si['Latitude'])
+    north_angle = to_radian(si['NorthAngle'])
+    @sun_transformation = Geom::Transformation.rotation(ORIGIN, X_AXIS, sun_angle) \
+                        * Geom::Transformation.rotation(ORIGIN, Z_AXIS, north_angle)
+    
     @configuration = configuration
+    
     # only consider polygons above face plane
     @polygons = polygons.select{|p| p.any? {|v| ORIGIN.vector_to(v)%face.normal>0}}
-    @pyramids = @polygons.collect{|p| Pyramid.new(p, configuration)}
+    @pyramids = @polygons.collect{|p| Pyramid.new(p, configuration, @sun_transformation)}
   end
   
   def prepare_center(center)
@@ -39,30 +50,33 @@ end
 class Pyramid
   attr_reader :polygon, :relative_polygon
   
-  def initialize(polygon, configuration)
+  def initialize(polygon, configuration, sun_transformation)
+    @sun_transformation = sun_transformation
     @configuration = configuration
     @polygon = polygon
   end
   
-  def update_relative_polygon(position)
-    @relative_polygon = @polygon.collect {|p| position.vector_to(p)}
+  def get_relative_polygon(position)
+    return @polygon.collect {|p| position.vector_to(p)}
   end
   
   # check if the polygon might cast a shadow on square with center
   def is_shadow_pyramid(center)
-    update_relative_polygon(center)
-    distance = @relative_polygon.collect{|v| v.length}.min
+    polygon = get_relative_polygon(center)
+    distance = polygon.collect{|v| v.length}.min
     angle_error = to_degree(@configuration.grid_length / 2 / distance)
     
     # polygon is below (horizontal) inclanation cutoff
-    polar_min_max = PolarMinMax.new(@relative_polygon)
-    return false if 90 - to_degree(polar_min_max.pl_min) <= @configuration.inclination_cutoff - angle_error
+    polar_min_max = PolarMinMax.new(polygon)
+    return false if 90 - to_degree(polar_min_max.pl_min) < @configuration.inclination_cutoff - angle_error
 
     # polygon is not in any possible sun_direction
-    # ... wouldn't help much since hash map does same job with same effort
-    # rearranging hash map for 'solar north pole' seems sensible, performance boost not clear
-    ##TODO
-
+    polygon.collect!{|v| v.transform(@sun_transformation)}
+    polar_min_max = PolarMinMax.new(polygon)
+    cutoff = ECLIPTIC_ANGLE + angle_error
+    return false if 90 - to_degree(polar_min_max.pl_min) < -cutoff \
+                  or 90 - to_degree(polar_min_max.pl_max) > cutoff
+    
     return true
   end
   
@@ -72,7 +86,7 @@ class Pyramid
   # the pyramid (for us) is defined by the array of its three inward side plane
   # normals (we don't need the base)
   def calculate_normals(position)
-    update_relative_polygon(position)
+    @relative_polygon = get_relative_polygon(position)
     @normals = []
     @relative_polygon.each.with_index do |p,i|
       @normals.push p*@relative_polygon[(i+1)%@polygon.length]
@@ -83,10 +97,6 @@ class Pyramid
     end
   end
   
-  # it might help efficiency to set the shadow casting pyramid to the
-  # first place in pyramids, as it probably(really?) casts a shadow
-  # for the next evaluation as well, arranging the sun states in a sensible
-  # way might be required ... an optimization for later
   def has_shadow(sun_direction)
     for normal in @normals
       return false if normal % sun_direction < 0
