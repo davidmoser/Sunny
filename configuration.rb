@@ -28,7 +28,7 @@ class Configuration
     add_prompt 'Inclination cutoff (degree)', @inclination_cutoff, ''
     
     @hash_map_classes = ObjectSpace.each_object(Class).select { |c| c < AbstractHashMap }
-    add_prompt 'Hash map class', SphericalHashMap.to_s, @hash_map_classes.join('|')
+    add_prompt 'Hash map class', @hash_map_class.to_s, @hash_map_classes.join('|')
     
     @data_collectors = ObjectSpace.each_object(Class).select{|c| c < DataCollector}
     @data_collectors.each do |dc|
