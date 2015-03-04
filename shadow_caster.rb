@@ -39,8 +39,9 @@ class ShadowCaster
   end
   
   def has_shadow(sun_direction)
-    for pyramid in @hash_map.get_values(sun_direction)
-      return true if pyramid.has_shadow(sun_direction)
+    transformed_sun_direction = sun_direction.transform(@sun_transformation)
+    for pyramid in @hash_map.get_values(transformed_sun_direction)
+      return true if pyramid.has_shadow(transformed_sun_direction)
     end
     return false
   end
@@ -56,23 +57,27 @@ class Pyramid
     @polygon = polygon
   end
   
-  def get_relative_polygon(position)
-    return @polygon.collect {|p| position.vector_to(p)}
+  def calculate_relative_polygon(position)
+    @relative_polygon = @polygon.collect {|p| position.vector_to(p)}
+  end
+  
+  def transform_relative_polygon
+    @relative_polygon.collect!{|v| v.transform(@sun_transformation)}
   end
   
   # check if the polygon might cast a shadow on square with center
   def is_shadow_pyramid(center)
-    polygon = get_relative_polygon(center)
-    distance = polygon.collect{|v| v.length}.min
+    calculate_relative_polygon(center)
+    distance = @relative_polygon.collect{|v| v.length}.min
     angle_error = to_degree(@configuration.grid_length / 2 / distance)
     
     # polygon is below (horizontal) inclanation cutoff
-    polar_min_max = PolarMinMax.new(polygon)
+    polar_min_max = PolarMinMax.new(@relative_polygon)
     return false if 90 - to_degree(polar_min_max.pl_min) < @configuration.inclination_cutoff - angle_error
 
     # polygon is not in any possible sun_direction
-    polygon.collect!{|v| v.transform(@sun_transformation)}
-    polar_min_max = PolarMinMax.new(polygon)
+    transform_relative_polygon
+    polar_min_max = PolarMinMax.new(@relative_polygon)
     cutoff = ECLIPTIC_ANGLE + angle_error
     return false if 90 - to_degree(polar_min_max.pl_min) < -cutoff \
                   or 90 - to_degree(polar_min_max.pl_max) > cutoff
@@ -86,7 +91,8 @@ class Pyramid
   # the pyramid (for us) is defined by the array of its three inward side plane
   # normals (we don't need the base)
   def calculate_normals(position)
-    @relative_polygon = get_relative_polygon(position)
+    calculate_relative_polygon(position)
+    transform_relative_polygon
     @normals = []
     @relative_polygon.each.with_index do |p,i|
       @normals.push p*@relative_polygon[(i+1)%@polygon.length]
