@@ -283,14 +283,15 @@ end
 # to debug the hash map
 class HashMapVisualizationSphere
   
-  def initialize(entities, center, map, az_resolution, pl_resolution)
+  def initialize(entities, center, map, az_resolution, pl_resolution, sun_transformation)
     @group = entities.add_group
     progress = Progress.new(360/az_resolution * 180/pl_resolution, 'Creating hash sphere...')
     @radius = 30
     ((az_resolution/2)..360).step(az_resolution) do |az|
       ((pl_resolution/2)..180).step(pl_resolution) do |pl|
-        direction = angles_to_vector(az, pl)
-        @group.entities.add_text(map.get_values(direction).length.to_s, center + direction) 
+        in_sun_coords = angles_to_vector(az, pl)
+        in_local_coords = in_sun_coords.transform(sun_transformation.inverse)
+        @group.entities.add_text(map.get_values(in_sun_coords).length.to_s, center + in_local_coords) 
         progress.work
       end
     end

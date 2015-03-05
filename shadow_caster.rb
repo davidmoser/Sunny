@@ -8,7 +8,7 @@ ECLIPTIC_ANGLE = to_radian(23.4)
 
 # creates a new @hash_map for each position and fills it with pyramids
 class ShadowCaster
-  attr_accessor :hash_map, :pyramids
+  attr_accessor :hash_map, :pyramids, :sun_transformation
   
   def initialize(polygons, face, configuration)
     # sun_transformation transforms solar north to z axis
