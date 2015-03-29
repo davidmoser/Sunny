@@ -21,6 +21,10 @@ class AbstractHashMap
   def get_hash(point)
     raise 'need to implement' 
   end
+  
+  def get_values_for_hash(hash)
+    return @map[hash]
+  end
 end
 
 # Simpler hashes for comparison

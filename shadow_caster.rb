@@ -24,6 +24,9 @@ class ShadowCaster
     # only consider polygons above face plane
     @polygons = polygons.select{|p| p.any? {|v| ORIGIN.vector_to(v)%face.normal>0}}
     @pyramids = @polygons.collect{|p| Pyramid.new(p, configuration, @sun_transformation)}
+    
+    # the empty map used in get_section
+    @hash_map = @configuration.hash_map_class.new(10)
   end
   
   def prepare_center(center)
@@ -44,6 +47,14 @@ class ShadowCaster
       return true if pyramid.has_shadow(transformed_sun_direction)
     end
     return false
+  end
+  
+  def get_section_index(sun_direction)
+    return @hash_map.get_hash(sun_direction.transform(@sun_transformation))
+  end
+  
+  def is_section_empty?(section_index)
+    return @hash_map.get_values_for_hash(section_index).length == 0
   end
   
 end

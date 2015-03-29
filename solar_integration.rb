@@ -117,6 +117,17 @@ class SolarIntegration
     shadow_caster = ShadowCaster.new(polygons, face, @configuration)
     data_collectors = @configuration.active_data_collectors.collect { |c| c.new(grid) }
     
+    # initial integration, no shadows
+    section_indexes = Set.new
+    for state in @sun_data.states
+      if state.vector%grid.normal > 0
+        irradiance = (grid.normal % state.vector) * state.tsi
+        index = shadow_caster.get_section_index(state.vector)
+        section_indexes.add index
+        data_collectors.each {|c| c.prepare_section(state, irradiance, index)}
+      end
+    end
+    
     render_t = 0
     prepare_center_t = 0
     prepare_position_t = 0
@@ -130,7 +141,7 @@ class SolarIntegration
         t3 = Time.new
         shadow_caster.prepare_position(point)
         t4 = Time.new
-        render_point(grid.normal, shadow_caster, data_collectors)
+        render_point(grid.normal, shadow_caster, data_collectors, section_indexes)
         t5 = Time.new
         progress.work
         prepare_position_t += t4-t3
@@ -144,8 +155,17 @@ class SolarIntegration
       "render time #{render_t.round(2)}"
   end
   
-  def render_point(normal, shadow_caster, data_collectors)
+  def render_point(normal, shadow_caster, data_collectors, section_indexes)
+    empty_section_indexes = []
+    for section_index in section_indexes
+      if shadow_caster.is_section_empty? section_index
+        empty_section_indexes.push section_index
+        data_collectors.each {|c| c.put_section(section_index)}
+      end
+    end
+    
     for state in @sun_data.states
+      next if empty_section_indexes.include? shadow_caster.get_section_index(state.vector)
       irradiance = nil
       if state.vector%normal > 0 and !shadow_caster.has_shadow(state.vector)
         irradiance = (normal % state.vector) * state.tsi

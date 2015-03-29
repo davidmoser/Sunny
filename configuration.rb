@@ -7,7 +7,7 @@ class Configuration
     @sub_divisions = 10
     @inclination_cutoff = 10
     @hash_map_class = SphericalHashMap
-    @active_data_collectors = [PolarAngleIrradianceHistogram, TotalIrradianceSquares]
+    @active_data_collectors = [TotalIrradianceSquares]
   end
   
   def add_prompt(prompt, default, list)

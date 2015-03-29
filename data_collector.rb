@@ -8,7 +8,21 @@ class DataCollector
     raise 'need to implement'
   end
   
+  # sun shines with strength irradiance on @current_point
+  # if @current_point is in the shadow then irradiance=nil
   def put(sun_state, irradiance)
+    raise 'need to implement'
+  end
+  
+  # for performance reasons the sky is split in sections
+  # here the data is gathered for all sun_states in a section
+  def prepare_section(sun_state, irradiance, section_index)
+    raise 'need to implement'
+  end
+
+  # if for @current_point there aren't any shadow casting polygons
+  # then put_section is called instead of put
+  def put_section(section_index)
     raise 'need to implement'
   end
   
@@ -31,11 +45,22 @@ class TotalIrradianceSquares < DataCollector
       end
     end
     Sketchup.active_model.commit_operation
+    
+    @section_irradiances = Hash.new(0)
   end
   
   def put(sun_state, irradiance)
     return if not irradiance
     @tiles[@current_point].irradiance += irradiance
+    sleep(0.001)
+  end
+  
+  def prepare_section(sun_state, irradiance, section_index)
+    @section_irradiances[section_index] += irradiance
+  end
+
+  def put_section(section_index)
+    @tiles[@current_point].irradiance += @section_irradiances[section_index]
   end
   
   def wrapup
