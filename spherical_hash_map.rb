@@ -11,11 +11,15 @@ class AbstractHashMap
   end
   
   def get_values(point)
-    raise 'need to implement' 
+    return @map[get_hash(point)]
   end
   
   def all_values
     return @map.values
+  end
+  
+  def get_hash(point)
+    raise 'need to implement' 
   end
 end
 
@@ -25,8 +29,8 @@ class NoHashMap < AbstractHashMap
     @map[0].push value
   end
   
-  def get_values(point)
-    return @map[0]
+  def get_hash(point)
+    return 0
   end
 end
 
@@ -42,9 +46,8 @@ class AzimuthHashMap < AbstractHashMap
     azimuth_hashes.hash_array.each{|h| @map[h].push value}
   end
   
-  def get_values(point)
-    azimuth_hash = @azimuth_class.calculate_hash(point)
-    return @map[azimuth_hash]
+  def get_hash(point)
+    return @azimuth_class.calculate_hash(point)
   end
 end
 
@@ -60,9 +63,8 @@ class PolarHashMap < AbstractHashMap
     polar_hashes.hash_array.each{|h| @map[h].push value}
   end
   
-  def get_values(point)
-    polar_hash = @polar_class.calculate_hash(point)
-    return @map[polar_hash]
+  def get_hash(point)
+    return @polar_class.calculate_hash(point)
   end
 end
 
@@ -92,10 +94,10 @@ class SphericalHashMap < AbstractHashMap
     return keys
   end
   
-  def get_values(point)
+  def get_hash(point)
     azimuth_hash = @azimuth_class.calculate_hash(point)
     polar_hash = @polar_class.calculate_hash(point)
-    return @map[[azimuth_hash, polar_hash]]
+    return [azimuth_hash, polar_hash]
   end
   
   def delete_value(keys, value)
