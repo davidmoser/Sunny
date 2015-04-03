@@ -22,7 +22,8 @@ class ShadowCaster
     @configuration = configuration
     
     # only consider polygons above face plane
-    @polygons = polygons.select{|p| p.any? {|v| ORIGIN.vector_to(v)%face.normal>0}}
+    face_point = face.vertices[0].position
+    @polygons = polygons.select{|p| p.any? {|v| face_point.vector_to(v)%face.normal>0}}
     @pyramids = @polygons.collect{|p| Pyramid.new(p, configuration, @sun_transformation)}
     
     # the empty map used in get_section

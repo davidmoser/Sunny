@@ -156,16 +156,18 @@ class SolarIntegration
   end
   
   def render_point(normal, shadow_caster, data_collectors, section_indexes)
-    empty_section_indexes = []
+    empty_section_indexes = Set.new
     for section_index in section_indexes
       if shadow_caster.is_section_empty? section_index
-        empty_section_indexes.push section_index
+        empty_section_indexes.add section_index
         data_collectors.each {|c| c.put_section(section_index)}
       end
     end
     
     for state in @sun_data.states
-      next if empty_section_indexes.include? shadow_caster.get_section_index(state.vector)
+      if empty_section_indexes.include? shadow_caster.get_section_index(state.vector)
+        next 
+      end
       irradiance = nil
       if state.vector%normal > 0 and !shadow_caster.has_shadow(state.vector)
         irradiance = (normal % state.vector) * state.tsi

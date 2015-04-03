@@ -13,21 +13,21 @@ class SunData
     si = Sketchup.active_model.shadow_info
     t_old = si['ShadowTime']
     
-#    t = Time.new(2014)
-#    t_end = Time.new(2015)
-#    while t<t_end
-#      si['ShadowTime'] = t
-#      @states.push SunState.new(si['SunDirection'],t, 1)
-#      t += 60 * 60
-#    end
-    
-    (1..12).each do |month|
-      (1..23).each do |hour|
-        t = Time.new(2014, month, 01, hour)
-        si['ShadowTime'] = t
-        @states.push SunState.new(si['SunDirection'],t, 1)
-      end
+    t = Time.new(2014)
+    t_end = Time.new(2015)
+    while t<t_end
+      si['ShadowTime'] = t
+      @states.push SunState.new(si['SunDirection'],t, 1)
+      t += 60 * 60
     end
+    
+#    (1..12).each do |month|
+#      (1..23).each do |hour|
+#        t = Time.new(2014, month, 01, hour)
+#        si['ShadowTime'] = t
+#        @states.push SunState.new(si['SunDirection'],t, 1)
+#      end
+#    end
     
     si['ShadowTime'] = t_old # restore initial time
     # generate states for times

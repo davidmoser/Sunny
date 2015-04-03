@@ -52,7 +52,6 @@ class TotalIrradianceSquares < DataCollector
   def put(sun_state, irradiance)
     return if not irradiance
     @tiles[@current_point].irradiance += irradiance
-    sleep(0.001)
   end
   
   def prepare_section(sun_state, irradiance, section_index)
