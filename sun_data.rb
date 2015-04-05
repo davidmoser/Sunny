@@ -37,9 +37,10 @@ class SunData
 end
 
 class SunState
-  attr_reader :vector, :time, :tsi
-  def initialize(vector, time, tsi)
-    @vector = vector
+  attr_reader :vector, :time, :tsi, :local_vector
+  def initialize(local_vector, time, tsi)
+    @local_vector = local_vector
+    @vector = local_vector.transform(SUN_TRANSFORMATION)
     @time = time
     @tsi = tsi
   end
@@ -56,7 +57,7 @@ class SunDataVisualizationSphere
     Sketchup.active_model.start_operation('Creating sund data sphere', true)
     p_old = center
     sun_data.states.each do |s|
-      p_new = center + s.vector.transform(@radius)
+      p_new = center + s.local_vector.transform(@radius)
       @group.entities.add_edges(p_old, p_new)
       p_old = p_new
       progress.work

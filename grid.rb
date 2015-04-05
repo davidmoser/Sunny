@@ -3,6 +3,8 @@ require 'solar_integration/flat_bounding_box.rb'
 # a grid is the splitting of a face into small @squares
 # all the small squares have the common @normal and @area
 class Grid
+  include FlatBoundingBox
+  
   attr_reader :normal, :area, :side1, :side2, :face
   attr_reader :squares, :sub_divisions, :subside1, :subside2, :number_of_subsquares
   

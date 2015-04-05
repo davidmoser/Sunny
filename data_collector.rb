@@ -1,5 +1,5 @@
 require 'solar_integration/progress.rb'
-require 'solar_integration/angle_conversion.rb'
+require 'solar_integration/globals.rb'
 
 class DataCollector
   attr_writer :current_point
@@ -16,13 +16,13 @@ class DataCollector
   
   # for performance reasons the sky is split in sections
   # here the data is gathered for all sun_states in a section
-  def prepare_section(sun_state, irradiance, section_index)
+  def prepare_section(sun_state, irradiance, section)
     raise 'need to implement'
   end
 
   # if for @current_point there aren't any shadow casting polygons
   # then put_section is called instead of put
-  def put_section(section_index)
+  def put_section(section)
     raise 'need to implement'
   end
   
@@ -54,12 +54,12 @@ class TotalIrradianceSquares < DataCollector
     @tiles[@current_point].irradiance += irradiance
   end
   
-  def prepare_section(sun_state, irradiance, section_index)
-    @section_irradiances[section_index] += irradiance
+  def prepare_section(sun_state, irradiance, section)
+    @section_irradiances[section] += irradiance
   end
 
-  def put_section(section_index)
-    @tiles[@current_point].irradiance += @section_irradiances[section_index]
+  def put_section(section)
+    @tiles[@current_point].irradiance += @section_irradiances[section]
   end
   
   def wrapup

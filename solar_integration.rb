@@ -1,4 +1,5 @@
 require 'sketchup.rb'
+require 'constants.rb'
 require 'solar_integration/progress.rb'
 require 'solar_integration/grid.rb'
 require 'solar_integration/spherical_hash_map.rb'
@@ -56,6 +57,8 @@ UI.menu('Plugins').add_item('Configuration ...') {
 }
 
 class SolarIntegration
+  include PolygonCollector
+  
   def initialize
     @sun_data = SunData.new
     @configuration = Configuration.new
@@ -113,20 +116,13 @@ class SolarIntegration
   def integrate(face)
     grid = Grid.new(face, @configuration.grid_length, @configuration.sub_divisions)
     
-    polygons = collect_model_polygons(Sketchup.active_model)
-    shadow_caster = ShadowCaster.new(polygons, face, @configuration)
     data_collectors = @configuration.active_data_collectors.collect { |c| c.new(grid) }
+    irradiances = calculate_irradiances(face.normal)
+    sky_sections = SkySections.new(irradiances.keys, 10)
+    sky_sections.sections.each{|s| render_section(s, irradiances, data_collectors)}
     
-    # initial integration, no shadows
-    section_indexes = Set.new
-    for state in @sun_data.states
-      if state.vector%grid.normal > 0
-        irradiance = (grid.normal % state.vector) * state.tsi
-        index = shadow_caster.get_section_index(state.vector)
-        section_indexes.add index
-        data_collectors.each {|c| c.prepare_section(state, irradiance, index)}
-      end
-    end
+    polygons = collect_model_polygons(Sketchup.active_model)
+    shadow_caster = ShadowCaster.new(polygons, face, sky_sections, @configuration)
     
     render_t = 0
     prepare_center_t = 0
@@ -137,11 +133,10 @@ class SolarIntegration
       shadow_caster.prepare_center(square.center)
       t2 = Time.new
       for point in square.points
-        data_collectors.each { |c| c.current_point=point }
         t3 = Time.new
-        shadow_caster.prepare_position(point)
+        prepare_point(point.transform(SUN_TRANSFORMATION), shadow_caster, data_collectors)
         t4 = Time.new
-        render_point(grid.normal, shadow_caster, data_collectors, section_indexes)
+        render_shadows(irradiances, shadow_caster, data_collectors, sky_sections)
         t5 = Time.new
         progress.work
         prepare_position_t += t4-t3
@@ -155,24 +150,41 @@ class SolarIntegration
       "render time #{render_t.round(2)}"
   end
   
-  def render_point(normal, shadow_caster, data_collectors, section_indexes)
-    empty_section_indexes = Set.new
-    for section_index in section_indexes
-      if shadow_caster.is_section_empty? section_index
-        empty_section_indexes.add section_index
-        data_collectors.each {|c| c.put_section(section_index)}
+  def calculate_irradiances(normal)
+    irradiances = Hash.new
+    for state in @sun_data.states
+      vector = state.local_vector
+      if vector%Z_AXIS > 0 and vector%normal > 0
+        irradiances[sun_state] = (normal % vector) * state.tsi
       end
     end
-    
-    for state in @sun_data.states
-      if empty_section_indexes.include? shadow_caster.get_section_index(state.vector)
-        next 
+    return irradiances
+  end
+  
+  def render_section(sky_section, irradiances, data_collectors)
+    for state in sky_section.sun_states
+      data_collectors.each {|c| c.prepare_section(state, irradiances[state], sky_section)}
+    end
+  end
+  
+  def prepare_point(point, shadow_caster, data_collectors)
+    data_collectors.each { |c| c.current_point=point }
+    shadow_caster.prepare_position(point.transform(SUN_TRANSFORMATION))
+  end
+  
+  def render_shadows(irradiances, shadow_caster, data_collectors, sky_sections)
+    for sky_section in sky_sections.sections
+      if shadow_caster.is_shadow_section? sky_section
+        for state in sky_section.sun_states
+          irradiance = nil
+          if !shadow_caster.has_shadow? state.vector
+            irradiance = irradiances[state]
+          end
+          data_collectors.each {|c| c.put(state, irradiance)}
+        end
+      else
+        data_collectors.each {|c| c.put_section(sky_section)}
       end
-      irradiance = nil
-      if state.vector%normal > 0 and !shadow_caster.has_shadow(state.vector)
-        irradiance = (normal % state.vector) * state.tsi
-      end
-      data_collectors.each {|c| c.put(state, irradiance)}
     end
   end
   
