@@ -1,5 +1,5 @@
 require 'sketchup.rb'
-require 'constants.rb'
+require 'solar_integration/globals.rb'
 require 'solar_integration/progress.rb'
 require 'solar_integration/grid.rb'
 require 'solar_integration/spherical_hash_map.rb'
@@ -8,6 +8,7 @@ require 'solar_integration/sun_data.rb'
 require 'solar_integration/data_collector.rb'
 require 'solar_integration/polygon_collector.rb'
 require 'solar_integration/configuration.rb'
+require 'solar_integration/sky_sections.rb'
 require 'set'
 
 SKETCHUP_CONSOLE.show
@@ -118,7 +119,7 @@ class SolarIntegration
     
     data_collectors = @configuration.active_data_collectors.collect { |c| c.new(grid) }
     irradiances = calculate_irradiances(face.normal)
-    sky_sections = SkySections.new(irradiances.keys, 10)
+    sky_sections = SkySections.new(irradiances.keys, 10, @configuration)
     sky_sections.sections.each{|s| render_section(s, irradiances, data_collectors)}
     
     polygons = collect_model_polygons(Sketchup.active_model)
@@ -134,7 +135,7 @@ class SolarIntegration
       t2 = Time.new
       for point in square.points
         t3 = Time.new
-        prepare_point(point.transform(SUN_TRANSFORMATION), shadow_caster, data_collectors)
+        prepare_point(point, shadow_caster, data_collectors)
         t4 = Time.new
         render_shadows(irradiances, shadow_caster, data_collectors, sky_sections)
         t5 = Time.new
@@ -155,7 +156,7 @@ class SolarIntegration
     for state in @sun_data.states
       vector = state.local_vector
       if vector%Z_AXIS > 0 and vector%normal > 0
-        irradiances[sun_state] = (normal % vector) * state.tsi
+        irradiances[state] = (normal % vector) * state.tsi
       end
     end
     return irradiances

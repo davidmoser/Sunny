@@ -1,5 +1,5 @@
 require 'solar_integration/spherical_hash_map.rb'
-require 'solar_integration/angle_conversion.rb'
+require 'solar_integration/globals.rb'
 
 
 # creates a new @hash_map for each position and fills it with pyramids
@@ -30,15 +30,15 @@ class ShadowCaster
     end
   end
   
-  def has_shadow(sun_direction)
+  def has_shadow? sun_direction
     for pyramid in @hash_map.get_values(sun_direction)
-      return true if pyramid.has_shadow(sun_direction)
+      return true if pyramid.has_shadow? sun_direction
     end
     return false
   end
   
   def is_shadow_section? section
-    return @hash_map[section.hash].length > 0
+    return @hash_map.get_values_for_hash(section.index).length > 0
   end
   
 end

@@ -1,4 +1,4 @@
-require 'globals.rb'
+require 'solar_integration/globals.rb'
 
 module FlatBoundingBox
   # the flat bounding box consists of four 3DPoints forming a rectangle with right

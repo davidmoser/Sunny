@@ -2,7 +2,8 @@
 
 
 class SkySections
-  def initialize(sun_states, angular_resolution)
+  def initialize(sun_states, angular_resolution, configuration)
+    @configuration = configuration
     @angular_resolution = angular_resolution
     hash_map = get_new_hash_map
     
@@ -25,10 +26,10 @@ end
 
 
 class SkySection
-  attr_reader :sun_states, :hash
+  attr_reader :sun_states, :index
   
-  def initialize(hash)
-    @hash = hash
+  def initialize(index)
+    @index = index
     @sun_states = []
   end
 end

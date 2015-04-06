@@ -1,5 +1,5 @@
 require 'solar_integration/progress.rb'
-require 'solar_integration/angle_conversion.rb'
+require 'solar_integration/globals.rb'
 
 class AbstractHashMap
   def initialize(resolution)
