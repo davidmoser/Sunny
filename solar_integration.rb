@@ -91,7 +91,8 @@ class SolarIntegration
   def visualize_shadow_pyramids(face)
     center = find_face_center(face)
     polygons = collect_model_polygons(Sketchup.active_model)
-    shadow_caster = ShadowCaster.new(polygons, face, @configuration)
+    sky_sections = SkySections.new([], 10, @configuration)
+    shadow_caster = ShadowCaster.new(polygons, face, sky_sections, @configuration)
     shadow_caster.prepare_center(center)
     shadow_caster.prepare_position(center)
     group = face.parent.entities.add_group
@@ -116,13 +117,13 @@ class SolarIntegration
   
   def integrate(face)
     grid = Grid.new(face, @configuration.grid_length, @configuration.sub_divisions)
+    polygons = collect_model_polygons(Sketchup.active_model)
     
     data_collectors = @configuration.active_data_collectors.collect { |c| c.new(grid) }
     irradiances = calculate_irradiances(face.normal)
     sky_sections = SkySections.new(irradiances.keys, 10, @configuration)
     sky_sections.sections.each{|s| render_section(s, irradiances, data_collectors)}
     
-    polygons = collect_model_polygons(Sketchup.active_model)
     shadow_caster = ShadowCaster.new(polygons, face, sky_sections, @configuration)
     
     render_t = 0
