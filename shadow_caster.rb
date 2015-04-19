@@ -20,10 +20,12 @@ class ShadowCaster
   end
   
   def prepare_center(center)
+    center = center.transform(SUN_TRANSFORMATION)
     @shadow_pyramids = @pyramids.select{|p| p.is_shadow_pyramid(center)}
   end
   
   def prepare_position(position)
+    position = position.transform(SUN_TRANSFORMATION)
     @hash_map = @sky_sections.get_new_hash_map
     for pyramid in @shadow_pyramids
       pyramid.calculate_normals(position)
@@ -50,17 +52,21 @@ class Pyramid
   def initialize(polygon, configuration)
     @configuration = configuration
     @polygon = polygon
+    @halve_diagonal = @configuration.grid_length / Math::sqrt(2)
   end
   
   def calculate_relative_polygon(position)
-    @relative_polygon = @polygon.collect {|p| position.vector_to(p)}
+    return @polygon.collect {|p| position.vector_to(p)}
   end
   
   # check if the polygon might cast a shadow on square with center
   def is_shadow_pyramid(center)
-    calculate_relative_polygon(center)
+    @relative_polygon = calculate_relative_polygon(center)
     distance = @relative_polygon.collect{|v| v.length}.min
-    angle_error = to_degree(@configuration.grid_length / 2 / distance)
+    
+    return true if distance <= @halve_diagonal
+    
+    angle_error = to_degree(Math::asin(@halve_diagonal / distance))
     
     # polygon is below (horizontal) inclanation cutoff
     polar_min_max = PolarMinMax.new(@relative_polygon)
@@ -81,11 +87,12 @@ class Pyramid
   # the pyramid (for us) is defined by the array of its three inward side plane
   # normals (we don't need the base)
   def calculate_normals(position)
-    calculate_relative_polygon(position)
-    @normals = []
-    @relative_polygon.each.with_index do |p,i|
-      @normals.push p*@relative_polygon[(i+1)%@polygon.length]
+    @relative_polygon = calculate_relative_polygon(position)
+    
+    @normals = @relative_polygon.collect.with_index do |p,i|
+      p*@relative_polygon[(i+1)%@polygon.length]
     end
+    
     # sign checking/fixing
     if @normals[0] % @relative_polygon[2] < 0
       @normals.collect! {|n| n.reverse}

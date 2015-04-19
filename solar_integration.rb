@@ -82,10 +82,11 @@ class SolarIntegration
   def visualize_hash_map(face)
     center = find_face_center(face)
     polygons = collect_model_polygons(Sketchup.active_model)
-    shadow_caster = ShadowCaster.new(polygons, face, @configuration)
+    sky_sections = SkySections.new([], 10, @configuration)
+    shadow_caster = ShadowCaster.new(polygons, face, sky_sections, @configuration)
     shadow_caster.prepare_center(center)
     shadow_caster.prepare_position(center)
-    HashMapVisualizationSphere.new(face.parent.entities, center, shadow_caster.hash_map, 10, 10, shadow_caster.sun_transformation)
+    HashMapVisualizationSphere.new(face.parent.entities, center, shadow_caster.hash_map, 10, 10, SUN_TRANSFORMATION)
   end
   
   def visualize_shadow_pyramids(face)
@@ -171,7 +172,7 @@ class SolarIntegration
   
   def prepare_point(point, shadow_caster, data_collectors)
     data_collectors.each { |c| c.current_point=point }
-    shadow_caster.prepare_position(point.transform(SUN_TRANSFORMATION))
+    shadow_caster.prepare_position(point)
   end
   
   def render_shadows(irradiances, shadow_caster, data_collectors, sky_sections)
