@@ -12,9 +12,9 @@ class ShadowCaster
     
     # only consider polygons with points above face plane
     lowest_face_point = face.vertices.collect{|v|v.position}.min_by{|p|p[2]}
-    polygons = polygons.select{|p| p.any? {|v| lowest_face_point.vector_to(v)%face.normal>0}}
-    polygons = polygons.select{|p| p.any? {|v| lowest_face_point[2]<v[2]}}
-    @polygons = polygons.collect{|p| p.collect{|q| q.transform(SUN_TRANSFORMATION)}}
+    @polygons = polygons.select!{|p| p.any? {|v| lowest_face_point.vector_to(v)%face.normal>0}}
+    @polygons.select!{|p| p.any? {|v| lowest_face_point[2]<v[2]}}
+    @polygons.collect!{|p| p.collect{|q| q.transform(SUN_TRANSFORMATION)}}
     
     @pyramids = @polygons.collect{|p| Pyramid.new(p, configuration)}
   end

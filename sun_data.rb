@@ -28,11 +28,13 @@ class SunData
 #        @states.push SunState.new(si['SunDirection'],t, 1)
 #      end
 #    end
-    
+
     si['ShadowTime'] = t_old # restore initial time
     # generate states for times
     # initialize vectors given location on earth and time
     # initialize tsi (atmospheric thickness, cloud cover, etc.)
+
+    @states.select! {|s| s.local_vector[2]>0}
   end
 end
 
