@@ -176,8 +176,11 @@ class SolarIntegration
   end
   
   def render_shadows(irradiances, shadow_caster, data_collectors, sky_sections)
+    with_shadow = 0
+    without_shadow = 0
     for sky_section in sky_sections.sections
       if shadow_caster.is_shadow_section? sky_section
+        with_shadow += 1
         for state in sky_section.sun_states
           irradiance = nil
           if !shadow_caster.has_shadow? state.vector
@@ -186,9 +189,11 @@ class SolarIntegration
           data_collectors.each {|c| c.put(state, irradiance)}
         end
       else
+        without_shadow += 1
         data_collectors.each {|c| c.put_section(sky_section)}
       end
     end
+    puts "#{with_shadow}/#{without_shadow}"
   end
   
 end
