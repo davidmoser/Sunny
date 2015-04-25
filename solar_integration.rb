@@ -121,7 +121,7 @@ class SolarIntegration
     polygons = collect_model_polygons(Sketchup.active_model)
     
     data_collectors = @configuration.active_data_collectors.collect { |c| c.new(grid) }
-    irradiances = calculate_irradiances(face.normal)
+    irradiances = calculate_irradiances(grid.subnormal)
     sky_sections = SkySections.new(irradiances.keys, 10, @configuration)
     sky_sections.sections.each{|s| render_section(s, irradiances, data_collectors)}
     
@@ -153,12 +153,13 @@ class SolarIntegration
       "render time #{render_t.round(2)}"
   end
   
+  # not really irradiance but energy in Wh
   def calculate_irradiances(normal)
     irradiances = Hash.new
     for state in @sun_data.states
       vector = state.local_vector
       if vector%Z_AXIS > 0 and vector%normal > 0
-        irradiances[state] = (normal % vector) * state.tsi
+        irradiances[state] = (normal % vector) * @sun_data.wh_per_m2
       end
     end
     return irradiances

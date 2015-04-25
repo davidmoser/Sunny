@@ -3,7 +3,7 @@ class Configuration
   attr_accessor :hash_map_class, :grid_length, :active_data_collectors, :inclination_cutoff, :sub_divisions
   
   def initialize
-    @grid_length = 100
+    @grid_length = 1
     @sub_divisions = 10
     @inclination_cutoff = 10
     @hash_map_class = SphericalHashMap
@@ -23,7 +23,7 @@ class Configuration
     @defaults = []
     @lists = []
     
-    add_prompt 'Grid length (cm)', @grid_length, ''
+    add_prompt 'Grid length (m)', @grid_length, ''
     add_prompt 'Number of sub divisions', @sub_divisions, ''
     add_prompt 'Inclination cutoff (degree)', @inclination_cutoff, ''
     

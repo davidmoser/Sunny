@@ -2,38 +2,33 @@ require 'solar_integration/progress.rb'
 
 # information about all the sun paths, irradiances etc.
 class SunData
-  attr_reader :states
-  #@tsis = [500, 700, 1000, 700, 500] # total solar irradiation arriving at ground from the direction of the sun w/m^2
+  attr_reader :states, :wh_per_m2
   
   def initialize
     @states = Array.new
-    @day_times = 1..23
+    day_interval = 10
+    minute_interval = 10
+    tsi = 700 # W/m^2
+    
+    hours_per_state = Float(day_interval * minute_interval) / 60
+    @wh_per_m2 = hours_per_state * tsi
+    
     # initialize states
-    # only using single time for now
+    # TODO: don't use Sketchup, it's slow (ui feedback)
+    # TODO: determine local tsi (atmospheric thickness, cloud cover, etc.)
     si = Sketchup.active_model.shadow_info
     t_old = si['ShadowTime']
     
-    t = Time.new(2014)
-    t_end = Time.new(2015)
-    while t<t_end
-      si['ShadowTime'] = t
-      @states.push SunState.new(si['SunDirection'],t, 1)
-      t += 60 * 60
+    (1..365).step(day_interval).each do |day|
+      (0..(24*60)).step(minute_interval).each do |minute|
+        t = Time.at(day * 24 * 60 * 60 + minute * 60)
+        si['ShadowTime'] = t
+        @states.push SunState.new(si['SunDirection'],t, 1)
+      end
     end
-    
-#    (1..12).each do |month|
-#      (1..23).each do |hour|
-#        t = Time.new(2014, month, 01, hour)
-#        si['ShadowTime'] = t
-#        @states.push SunState.new(si['SunDirection'],t, 1)
-#      end
-#    end
 
     si['ShadowTime'] = t_old # restore initial time
-    # generate states for times
-    # initialize vectors given location on earth and time
-    # initialize tsi (atmospheric thickness, cloud cover, etc.)
-
+    
     @states.select! {|s| s.local_vector[2]>0}
   end
 end
