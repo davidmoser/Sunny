@@ -14,13 +14,11 @@ class ShadowCaster
     lowest_face_point = face.vertices.collect{|v|v.position}.min_by{|p|p[2]}
     @polygons = polygons.select{|p| p.any? {|v| lowest_face_point.vector_to(v)%face.normal>1}}
     @polygons.select!{|p| p.any? {|v| lowest_face_point[2]<v[2]}}
-    @polygons.collect!{|p| p.collect{|q| q.transform(SUN_TRANSFORMATION)}}
     
     @pyramids = @polygons.collect{|p| Pyramid.new(p, configuration)}
   end
   
   def prepare_center(center)
-    center = center.transform(SUN_TRANSFORMATION)
     @shadow_pyramids = @pyramids.select{|p| p.is_shadow_pyramid(center)}
   end
   
@@ -51,29 +49,32 @@ class Pyramid
   
   def initialize(polygon, configuration)
     @configuration = configuration
-    @polygon = polygon
-    @halve_diagonal = @configuration.grid_length / Math::sqrt(2)
+    @local_polygon = polygon
+    @sun_polygon = polygon.collect{|p|p.transform(SUN_TRANSFORMATION)}
+    
+    @halve_diagonal = @configuration.grid_length.m / Math::sqrt(2)
   end
   
   def calculate_relative_polygon(position)
-    return @polygon.collect {|p| position.vector_to(p)}
+    return @sun_polygon.collect {|p| position.vector_to(p)}
   end
   
   # check if the polygon might cast a shadow on square with center
   def is_shadow_pyramid(center)
-    @relative_polygon = calculate_relative_polygon(center)
-    distance = @relative_polygon.collect{|v| v.length}.min
+    relative_polygon = @local_polygon.collect {|p| center.vector_to(p)}
+    distance = relative_polygon.collect{|v| v.length}.min
     
     return true if distance <= @halve_diagonal
     
     angle_error = to_degree(Math::asin(@halve_diagonal / distance))
     
     # polygon is below (horizontal) inclanation cutoff
-    polar_min_max = PolarMinMax.new(@relative_polygon)
+    polar_min_max = PolarMinMax.new(relative_polygon)
     return false if 90 - to_degree(polar_min_max.pl_min) < @configuration.inclination_cutoff - angle_error
 
     # polygon is not in any possible sun_direction
-    polar_min_max = PolarMinMax.new(@relative_polygon)
+    relative_polygon = calculate_relative_polygon(center.transform(SUN_TRANSFORMATION))
+    polar_min_max = PolarMinMax.new(relative_polygon)
     cutoff = ECLIPTIC_ANGLE + angle_error
     return false if 90 - to_degree(polar_min_max.pl_min) < -cutoff \
                   or 90 - to_degree(polar_min_max.pl_max) > cutoff
@@ -90,7 +91,7 @@ class Pyramid
     @relative_polygon = calculate_relative_polygon(position)
     
     @normals = @relative_polygon.collect.with_index do |p,i|
-      p*@relative_polygon[(i+1)%@polygon.length]
+      p*@relative_polygon[(i+1)%@relative_polygon.length]
     end
     
     # sign checking/fixing
