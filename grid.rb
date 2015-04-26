@@ -7,7 +7,7 @@ class Grid
   include FlatBoundingBox
   
   attr_reader :squares, :number_of_subsquares, :side1, :side2, :face, :normal
-  attr_reader :subdivisions, :subside1, :subside2, :subnormal 
+  attr_reader :subdivisions, :subside1, :subside2 
   
   def initialize(face, grid_length, subdivisions)
     @face = face
@@ -26,7 +26,6 @@ class Grid
     @subside1 = @side1.transform(1.0/@subdivisions)
     @subside2 = @side2.transform(1.0/@subdivisions)
     
-    @subnormal = (@side1 * @side2).transform( (1.to_m / @subdivisions)**2 )
     base = bounding_box[0]
     
     @squares = []

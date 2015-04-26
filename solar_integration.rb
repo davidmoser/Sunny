@@ -118,7 +118,7 @@ class SolarIntegration
     center = face.vertices
       .collect{|v|Geom::Vector3d.new v.position.to_a}.reduce(:+)
       .transform(1.0/face.vertices.length)
-    return Geom::Point3d.new(center.to_a) + face.normal.normalize
+    return Geom::Point3d.new(center.to_a) + face.normal
   end
   
   def integrate(face)
@@ -126,7 +126,7 @@ class SolarIntegration
     polygons = collect_model_polygons(Sketchup.active_model)
     
     data_collectors = @configuration.active_data_collectors.collect { |c| c.new(grid) }
-    irradiances = calculate_irradiances(grid.subnormal)
+    irradiances = calculate_irradiances(grid.normal)
     sky_sections = SkySections.new(irradiances.keys, 10, @configuration)
     sky_sections.sections.each{|s| render_section(s, irradiances, data_collectors)}
     
