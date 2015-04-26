@@ -24,13 +24,8 @@ module FlatBoundingBox
 
   def find_uv(face)
     normal = face.normal
-    if !normal.parallel? X_AXIS
-      u = normal * X_AXIS
-    elsif !normal.parallel? Y_AXIS
-      u = normal * Y_AXIS
-    else
-      u = normal * Z_AXIS
-    end
+    longest_edge = face.edges.max_by{|e|e.length}
+    u = longest_edge.start.position - longest_edge.end.position
     v = normal * u
     return u, v
   end
