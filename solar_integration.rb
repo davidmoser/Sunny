@@ -9,6 +9,7 @@ require 'solar_integration/data_collector.rb'
 require 'solar_integration/polygon_collector.rb'
 require 'solar_integration/configuration.rb'
 require 'solar_integration/sky_sections.rb'
+require 'solar_integration/irradiance_viewer.rb'
 require 'set'
 
 SKETCHUP_CONSOLE.show
@@ -55,6 +56,10 @@ UI.menu('Plugins').add_item('Visualize shadow pyramids') {
 
 UI.menu('Plugins').add_item('Configuration ...') {
   $solar_integration.update_configuration
+}
+
+UI.menu("Plugins").add_item("Irradiance Viewer") {
+  Sketchup.active_model.select_tool IrradianceViewer.new
 }
 
 class SolarIntegration
