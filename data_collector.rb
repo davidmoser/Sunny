@@ -63,8 +63,8 @@ class TotalIrradianceSquares < DataCollector
   end
   
   def wrapup
-    minmax = @tiles.values.collect{|s| s.irradiance}.minmax
-    color_bar = ColorBar.new(*minmax)
+    max = @section_irradiances.values.reduce(:+)
+    color_bar = ColorBar.new(max*0.8, max)
     progress = Progress.new(@tiles.length, 'Coloring tiles...')
     Sketchup.active_model.start_operation('Coloring tiles', true)
     @tiles.values.each do |s|
