@@ -3,7 +3,7 @@ class Configuration
   attr_accessor :hash_map_class, :grid_length, :active_data_collectors, :inclination_cutoff, :sub_divisions
   
   def initialize
-    @grid_length = 1
+    @grid_length = 3
     @sub_divisions = 10
     @inclination_cutoff = 10
     @hash_map_class = SphericalHashMap
