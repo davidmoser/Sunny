@@ -1,13 +1,17 @@
 
 class Configuration
-  attr_accessor :hash_map_class, :grid_length, :active_data_collectors, :inclination_cutoff, :sub_divisions
-  
+  attr_reader :hash_map_class, :grid_length, :sub_divisions, \
+              :active_data_collectors, :inclination_cutoff, \
+              :sun_states, :tsi
+    
   def initialize
     @grid_length = 3
     @sub_divisions = 10
     @inclination_cutoff = 10
     @hash_map_class = SphericalHashMap
     @active_data_collectors = [TotalIrradianceSquares]
+    @sun_states = 1000
+    @tsi = 700 # W/m^2
   end
   
   def add_prompt(prompt, default, list)
@@ -30,6 +34,9 @@ class Configuration
     @hash_map_classes = ObjectSpace.each_object(Class).select { |c| c < AbstractHashMap }
     add_prompt 'Hash map class', @hash_map_class.to_s, @hash_map_classes.join('|')
     
+    add_prompt 'Number of sun states', @sun_states, ''
+    add_prompt 'TSI (W/m^2)', @tsi, ''
+    
     @data_collectors = ObjectSpace.each_object(Class).select{|c| c < DataCollector}
     @data_collectors.each do |dc|
       add_prompt dc.to_s, (@active_data_collectors.include? dc)? 'active':'inactive', 'active|inactive' 
@@ -43,12 +50,16 @@ class Configuration
     @inclination_cutoff = input[2].to_i
     @hash_map_class = @hash_map_classes.find{|c| c.to_s==input[3]}
     
+    @sun_states = input[4].to_i
+    @tsi = input[5].to_i
+    
     @active_data_collectors = []
-    i = 4
+    i = 6
     @data_collectors.each do |dc|
       @active_data_collectors.push dc if input[i]=='active'
       i += 1
     end
+    
   end
 end
 

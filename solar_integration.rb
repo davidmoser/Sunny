@@ -38,14 +38,6 @@ UI.menu('Plugins').add_item('Visualize sun states') {
   end
 }
 
-UI.menu('Plugins').add_item('Print polygons') {
-  model = Sketchup.active_model
-  
-  for p in collect_model_polygons(model)
-    puts p
-  end
-}
-
 UI.menu('Plugins').add_item('Visualize shadow pyramids') {
   model = Sketchup.active_model
   
@@ -66,7 +58,6 @@ class SolarIntegration
   include PolygonCollector
   
   def initialize
-    @sun_data = SunData.new
     @configuration = Configuration.new
   end
   
@@ -75,13 +66,9 @@ class SolarIntegration
   end
 
   def visualize_sun_states(face)
-    # center of gravity of vertices
-    center = face.vertices
-      .collect{|v|Geom::Vector3d.new v.position.to_a}.reduce(:+)
-      .transform(1.0/face.vertices.length)
-    center = Geom::Point3d.new center.to_a
-    
-    SunDataVisualizationSphere.new(face.parent.entities, center)
+    sun_data = SunData.new(@configuration)
+    center = find_face_center(face)
+    SunDataVisualizationSphere.new(sun_data, face.parent.entities, center)
   end
   
   def visualize_hash_map(face)
@@ -122,11 +109,13 @@ class SolarIntegration
   end
   
   def integrate(face)
+    sun_data = SunData.new(@configuration)
+    
     grid = Grid.new(face, @configuration.grid_length, @configuration.sub_divisions)
     polygons = collect_model_polygons(Sketchup.active_model)
     
     data_collectors = @configuration.active_data_collectors.collect { |c| c.new(grid) }
-    irradiances = calculate_irradiances(grid.normal)
+    irradiances = calculate_irradiances(sun_data, grid.normal)
     sky_sections = SkySections.new(irradiances.keys, 10, @configuration)
     sky_sections.sections.each{|s| render_section(s, irradiances, data_collectors)}
     
@@ -159,12 +148,12 @@ class SolarIntegration
   end
   
   # not really irradiance but energy in Wh
-  def calculate_irradiances(normal)
+  def calculate_irradiances(sun_data, normal)
     irradiances = Hash.new
-    for state in @sun_data.states
+    for state in sun_data.states
       vector = state.local_vector
       if vector%Z_AXIS > 0 and vector%normal > 0
-        irradiances[state] = (normal % vector) * @sun_data.wh_per_m2
+        irradiances[state] = (normal % vector) * sun_data.wh_per_m2
       end
     end
     return irradiances
