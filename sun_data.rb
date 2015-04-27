@@ -4,16 +4,25 @@ require 'solar_integration/progress.rb'
 class SunData
   attr_reader :states, :wh_per_m2
   
+  def initialize
+    @number_of_states = nil
+    @tsi = nil
+  end
+  
   # randomly selects sun states, choosing e.g. a state every full hour for each
   # day is very bad sampling (small differences between days, large differences
   # between hours).
-  def initialize(configuration)
+  def update(configuration)
+    return if @tsi==configuration.tsi and @number_of_states==configuration.sun_states
+    
+    @tsi = configuration.tsi
+    @number_of_states = configuration.sun_states
     @states = Array.new
     
     minutes_per_year = 365 * 24 * 60 * 60
     
-    hours_per_state = Float(minutes_per_year) / configuration.sun_states
-    @wh_per_m2 = hours_per_state * configuration.tsi
+    hours_per_state = Float(minutes_per_year) / @number_of_states
+    @wh_per_m2 = hours_per_state * @tsi
     
     # initialize states
     # TODO: don't use Sketchup, it's slow (ui feedback)
@@ -21,7 +30,7 @@ class SunData
     si = Sketchup.active_model.shadow_info
     t_old = si['ShadowTime']
 
-    while @states.length < configuration.sun_states
+    while @states.length < @number_of_states
       t = Time.at(rand(60*minutes_per_year))
       si['ShadowTime'] = t
       local_vector = si['SunDirection']

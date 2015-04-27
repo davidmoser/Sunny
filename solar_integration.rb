@@ -59,6 +59,7 @@ class SolarIntegration
   
   def initialize
     @configuration = Configuration.new
+    @sun_data = SunData.new
   end
   
   def update_configuration
@@ -66,9 +67,9 @@ class SolarIntegration
   end
 
   def visualize_sun_states(face)
-    sun_data = SunData.new(@configuration)
+    @sun_data.update(@configuration)
     center = find_face_center(face)
-    SunDataVisualizationSphere.new(sun_data, face.parent.entities, center)
+    SunDataVisualizationSphere.new(@sun_data, face.parent.entities, center)
   end
   
   def visualize_hash_map(face)
@@ -109,13 +110,13 @@ class SolarIntegration
   end
   
   def integrate(face)
-    sun_data = SunData.new(@configuration)
+    @sun_data.update(@configuration)
     
     grid = Grid.new(face, @configuration.grid_length, @configuration.sub_divisions)
     polygons = collect_model_polygons(Sketchup.active_model)
     
     data_collectors = @configuration.active_data_collectors.collect { |c| c.new(grid) }
-    irradiances = calculate_irradiances(sun_data, grid.normal)
+    irradiances = calculate_irradiances(@sun_data, grid.normal)
     sky_sections = SkySections.new(irradiances.keys, 10, @configuration)
     sky_sections.sections.each{|s| render_section(s, irradiances, data_collectors)}
     
@@ -124,6 +125,8 @@ class SolarIntegration
     render_t = 0
     prepare_center_t = 0
     prepare_position_t = 0
+    @with_shadow = 0
+    @without_shadow = 0
     progress = Progress.new(grid.number_of_subsquares, 'Integrating irradiances...')
     for square in grid.squares
       t1 = Time.new
@@ -145,6 +148,7 @@ class SolarIntegration
     puts "prepare center #{prepare_center_t.round(2)}, "\
       "prepare position #{prepare_position_t.round(2)}, "\
       "render time #{render_t.round(2)}"
+    puts "sections with shadow #{@with_shadow}, without shadow #{@without_shadow}"
   end
   
   # not really irradiance but energy in Wh
@@ -171,11 +175,9 @@ class SolarIntegration
   end
   
   def render_shadows(irradiances, shadow_caster, data_collectors, sky_sections)
-    with_shadow = 0
-    without_shadow = 0
     for sky_section in sky_sections.sections
       if shadow_caster.is_shadow_section? sky_section
-        with_shadow += 1
+        @with_shadow += 1
         for state in sky_section.sun_states
           irradiance = nil
           if !shadow_caster.has_shadow? state.vector
@@ -184,11 +186,10 @@ class SolarIntegration
           data_collectors.each {|c| c.put(state, irradiance)}
         end
       else
-        without_shadow += 1
+        @without_shadow += 1
         data_collectors.each {|c| c.put_section(sky_section)}
       end
     end
-    puts "#{with_shadow}/#{without_shadow}"
   end
   
 end
