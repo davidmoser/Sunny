@@ -50,8 +50,18 @@ UI.menu('Plugins').add_item('Configuration ...') {
   $solar_integration.update_configuration
 }
 
-UI.menu("Plugins").add_item("Irradiance Viewer") {
+UI.menu('Plugins').add_item('Irradiance Viewer') {
   Sketchup.active_model.select_tool IrradianceViewer.new
+}
+
+UI.menu('Plugins').add_item('Nice configuration ...') {
+  dialog = UI::WebDialog.new('Nice configuration', true, 'solar_integration_configuration', 400, 400, 150, 150, true)
+
+  pathname = File.expand_path( File.dirname(__FILE__) )
+  pathname = File.join( pathname, 'configuration.html' )
+  dialog.set_file( pathname )
+  
+  dialog.show
 }
 
 class SolarIntegration
