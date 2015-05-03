@@ -10,59 +10,10 @@ require 'solar_integration/polygon_collector.rb'
 require 'solar_integration/configuration.rb'
 require 'solar_integration/sky_sections.rb'
 require 'solar_integration/irradiance_viewer.rb'
+require 'solar_integration/menu.rb'
 require 'set'
 
 SKETCHUP_CONSOLE.show
-
-UI.menu('Plugins').add_item('Integrate selection') {
-  model = Sketchup.active_model
-  
-  model.selection.select{|f|f.typename=='Face'}.each do |f|
-    $solar_integration.integrate(f)
-  end
-}
-
-UI.menu('Plugins').add_item('Visualize spherical hash map') {
-  model = Sketchup.active_model
-  
-  model.selection.select{|f|f.typename=='Face'}.each do |f|
-    $solar_integration.visualize_hash_map(f)
-  end
-}
-
-UI.menu('Plugins').add_item('Visualize sun states') {
-  model = Sketchup.active_model
-  
-  model.selection.select{|f|f.typename=='Face'}.each do |f|
-    $solar_integration.visualize_sun_states(f)
-  end
-}
-
-UI.menu('Plugins').add_item('Visualize shadow pyramids') {
-  model = Sketchup.active_model
-  
-  model.selection.select{|f|f.typename=='Face'}.each do |f|
-    $solar_integration.visualize_shadow_pyramids(f)
-  end
-}
-
-UI.menu('Plugins').add_item('Configuration ...') {
-  $solar_integration.update_configuration
-}
-
-UI.menu('Plugins').add_item('Irradiance Viewer') {
-  Sketchup.active_model.select_tool IrradianceViewer.new
-}
-
-UI.menu('Plugins').add_item('Nice configuration ...') {
-  dialog = UI::WebDialog.new('Nice configuration', true, 'solar_integration_configuration', 400, 400, 150, 150, true)
-
-  pathname = File.expand_path( File.dirname(__FILE__) )
-  pathname = File.join( pathname, 'configuration.html' )
-  dialog.set_file( pathname )
-  
-  dialog.show
-}
 
 class SolarIntegration
   include PolygonCollector
@@ -70,6 +21,7 @@ class SolarIntegration
   def initialize
     @configuration = Configuration.new
     @sun_data = SunData.new
+    Menu.new(self)
   end
   
   def update_configuration

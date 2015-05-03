@@ -108,7 +108,7 @@ class Pyramid
   end
   
   def visualize(entities, base)
-    @polygon.each{|p| entities.add_edges base, p.transform(SUN_TRANSFORMATION.inverse)}
+    @local_polygon.each{|p| entities.add_edges base, p}
   end
 end
 

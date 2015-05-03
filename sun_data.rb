@@ -61,12 +61,10 @@ class SunDataVisualizationSphere
     @radius = 30
     
     progress = Progress.new(sun_data.states.length, 'Creating sun data sphere...')
-    Sketchup.active_model.start_operation('Creating sund data sphere', true)
-    p_old = center
+    Sketchup.active_model.start_operation('Creating sun data sphere', true)
     sun_data.states.each do |s|
-      p_new = center + s.local_vector.transform(@radius)
-      @group.entities.add_edges(p_old, p_new)
-      p_old = p_new
+      point = center + s.local_vector.transform(@radius)
+      @group.entities.add_cpoint(point)
       progress.work
     end
     Sketchup.active_model.commit_operation
