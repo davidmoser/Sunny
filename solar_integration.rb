@@ -11,16 +11,20 @@ require 'solar_integration/configuration.rb'
 require 'solar_integration/sky_sections.rb'
 require 'solar_integration/irradiance_viewer.rb'
 require 'solar_integration/menu.rb'
+require 'solar_integration/web_configuration.rb'
 require 'set'
 
 SKETCHUP_CONSOLE.show
 
 class SolarIntegration
+  attr_reader :web_configuration
+  
   include PolygonCollector
   
   def initialize
     @configuration = Configuration.new
     @sun_data = SunData.new
+    @web_configuration = WebConfiguration.new
     Menu.new(self)
   end
   

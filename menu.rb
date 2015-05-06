@@ -16,13 +16,7 @@ class Menu
     end
     
     add_menu('Nice configuration ...') do
-      dialog = UI::WebDialog.new('Nice configuration', true, 'solar_integration_configuration', 400, 400, 150, 150, true)
-
-      pathname = File.expand_path( File.dirname(__FILE__) )
-      pathname = File.join( pathname, 'configuration.html' )
-      dialog.set_file( pathname )
-
-      dialog.show
+      solar_integration.web_configuration.show
     end
     
     @menu.add_separator

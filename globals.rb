@@ -20,3 +20,5 @@ sun_angle = to_radian(90 - si['Latitude'])
 north_angle = to_radian(si['NorthAngle'])
 SUN_TRANSFORMATION = Geom::Transformation.rotation(ORIGIN, X_AXIS, sun_angle) \
                     * Geom::Transformation.rotation(ORIGIN, Z_AXIS, north_angle)
+                  
+INSTALLATION_FOLDER = 'Plugins/solar_integration'
