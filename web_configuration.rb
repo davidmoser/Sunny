@@ -16,16 +16,12 @@ class WebConfiguration
     
     @dialog.add_action_callback('get_data') do |dialog|
       json = JSON.generate(@data)
-      script = "setData(#{json})"
+      script = "data =#{json};"
       dialog.execute_script(script)
     end
   end
   
   def show
-    if @dialog.visible?
-      @dialog.close
-    else
-      @dialog.show
-    end
+    @dialog.show
   end
 end

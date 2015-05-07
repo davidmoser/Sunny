@@ -1,34 +1,34 @@
 <!DOCTYPE html>
-<!--
-To change this license header, choose License Headers in Project Properties.
-To change this template file, choose Tools | Templates
-and open the template in the editor.
--->
 <html>
     <head>
         <title>Sunny Configuration</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <script>
-            data = null;
-
-            function putData() {
-                window.location.href = 'skp:put_data@' + JSON.stringify(data);
-            }
-
-            function getData() {
-                window.location.href = 'skp:get_data'
-                document.getElementById('output').innerHTML = data;
-            }
-            
-            function setData(newData) {
-                data = newData;
-            }
-        </script>
+        <script src= "web/angular.min.js"></script>
     </head>
     <body>
         <h3 id="output">You have 0 things selected.</h3>
-        <input type="button" onclick="getData()" value="Get">
         <input type="button" onclick="putData()" value="Put">
+        
+        <div ng-app="sunnyApp" ng-controller="sunnyCtrl">
+
+        Number of sun states: <input type="text" ng-model="conf.sun_states"><br>
+        Length of grid tiles (m): <input type="text" ng-model="conf.square_length"><br>
+        <br>
+        Hash: {{conf.sun_states + " " + conf.square_length}}
+
+        </div>
+        
+        <script>
+data = null;
+function putData(data) { window.location.href = 'skp:put_data@' + JSON.stringify(data); }
+function getData() { window.location.href = 'skp:get_data'; return data;}
+            
+var app = angular.module('sunnyApp', []);
+app.controller('sunnyCtrl', function($scope) {
+    $scope.conf = getData();
+    $scope.$watchCollection('conf', function (newConf, oldConf) { putData(newConf) });
+});
+        </script>
     </body>
 </html>
