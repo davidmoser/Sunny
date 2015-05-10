@@ -7,7 +7,6 @@ require 'solar_integration/shadow_caster.rb'
 require 'solar_integration/sun_data.rb'
 require 'solar_integration/data_collector.rb'
 require 'solar_integration/polygon_collector.rb'
-require 'solar_integration/configuration.rb'
 require 'solar_integration/sky_sections.rb'
 require 'solar_integration/irradiance_viewer.rb'
 require 'solar_integration/menu.rb'
@@ -16,22 +15,15 @@ require 'set'
 SKETCHUP_CONSOLE.show
 
 class SolarIntegration
-  attr_reader :configuration
-  
   include PolygonCollector
   
   def initialize
-    @configuration = Configuration.new
     @sun_data = SunData.new
     Menu.new(self)
   end
-  
-  def update_configuration
-    @configuration.update
-  end
 
   def visualize_sun_states(face)
-    @sun_data.update(@configuration)
+    @sun_data.update
     center = find_face_center(face)
     SunDataVisualizationSphere.new(@sun_data, face.parent.entities, center)
   end
@@ -39,8 +31,7 @@ class SolarIntegration
   def visualize_hash_map(face)
     center = find_face_center(face)
     polygons = collect_model_polygons(Sketchup.active_model)
-    sky_sections = SkySections.new([], 10, @configuration)
-    shadow_caster = ShadowCaster.new(polygons, face, sky_sections, @configuration)
+    shadow_caster = ShadowCaster.new(polygons, face, CONFIGURATION.square_length)
     shadow_caster.prepare_center(center)
     shadow_caster.prepare_position(center)
     HashMapVisualizationSphere.new(face.parent.entities, center, shadow_caster.hash_map, 10, 10, SUN_TRANSFORMATION)
@@ -49,8 +40,7 @@ class SolarIntegration
   def visualize_shadow_pyramids(face)
     center = find_face_center(face)
     polygons = collect_model_polygons(Sketchup.active_model)
-    sky_sections = SkySections.new([], @configuration.hash_map_angular_resolution)
-    shadow_caster = ShadowCaster.new(polygons, face, sky_sections, @configuration)
+    shadow_caster = ShadowCaster.new(polygons, face, CONFIGURATION.square_length)
     shadow_caster.prepare_center(center)
     shadow_caster.prepare_position(center)
     group = face.parent.entities.add_group
@@ -74,17 +64,17 @@ class SolarIntegration
   end
   
   def integrate(face)
-    @sun_data.update(@configuration)
+    @sun_data.update
     
-    grid = Grid.new(face, @configuration.grid_length, @configuration.sub_divisions)
+    grid = Grid.new(face)
     polygons = collect_model_polygons(Sketchup.active_model)
     
-    data_collectors = @configuration.active_data_collectors.collect { |c| c.new(grid) }
+    data_collectors = CONFIGURATION.active_data_collectors.collect { |c| c.new(grid) }
     irradiances = calculate_irradiances(@sun_data, grid.normal)
-    sky_sections = SkySections.new(irradiances.keys, 10, @configuration)
+    sky_sections = SkySections.new(irradiances.keys)
     sky_sections.sections.each{|s| render_section(s, irradiances, data_collectors)}
     
-    shadow_caster = ShadowCaster.new(polygons, face, sky_sections, @configuration)
+    shadow_caster = ShadowCaster.new(polygons, face, grid.square_length)
     
     render_t = 0
     prepare_center_t = 0

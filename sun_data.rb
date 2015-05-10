@@ -1,4 +1,5 @@
 require 'solar_integration/progress.rb'
+require 'solar_integration/globals.rb'
 
 # information about the sun positions, irradiances etc.
 class SunData
@@ -12,11 +13,11 @@ class SunData
   # randomly selects sun states, choosing e.g. a state every full hour for each
   # day is very bad sampling (small differences between days, large differences
   # between hours).
-  def update(configuration)
-    return if @tsi==configuration.tsi and @number_of_states==configuration.sun_states
+  def update
+    return if @tsi==CONFIGURATION.tsi and @number_of_states==CONFIGURATION.sun_states
     
-    @tsi = configuration.tsi
-    @number_of_states = configuration.sun_states
+    @tsi = CONFIGURATION.tsi
+    @number_of_states = CONFIGURATION.sun_states
     @states = Array.new
     
     minutes_per_year = 365 * 24 * 60 * 60

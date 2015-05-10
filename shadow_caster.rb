@@ -1,21 +1,17 @@
 require 'solar_integration/spherical_hash_map.rb'
 require 'solar_integration/globals.rb'
 
-
 # creates a new @hash_map for each position and fills it with pyramids
 class ShadowCaster
   attr_accessor :hash_map, :pyramids
   
-  def initialize(polygons, face, sky_sections, configuration)
-    @configuration = configuration
-    @sky_sections = sky_sections
-    
+  def initialize(polygons, face, square_length)
     # only consider polygons with points above face plane
     lowest_face_point = face.vertices.collect{|v|v.position}.min_by{|p|p[2]}
     @polygons = polygons.select{|p| p.any? {|v| lowest_face_point.vector_to(v)%face.normal>1}}
     @polygons.select!{|p| p.any? {|v| lowest_face_point[2]<v[2]}}
     
-    @pyramids = @polygons.collect{|p| Pyramid.new(p, configuration)}
+    @pyramids = @polygons.collect{|p| Pyramid.new(p, square_length)}
   end
   
   def prepare_center(center)
@@ -24,7 +20,7 @@ class ShadowCaster
   
   def prepare_position(position)
     position = position.transform(SUN_TRANSFORMATION)
-    @hash_map = @sky_sections.get_new_hash_map
+    @hash_map = SphericalHashMap.new
     for pyramid in @shadow_pyramids
       pyramid.calculate_normals(position)
       @hash_map.add_value(pyramid.relative_polygon, pyramid)
@@ -47,12 +43,11 @@ end
 class Pyramid
   attr_reader :polygon, :relative_polygon
   
-  def initialize(polygon, configuration)
-    @configuration = configuration
+  def initialize(polygon, square_length)
     @local_polygon = polygon
     @sun_polygon = polygon.collect{|p|p.transform(SUN_TRANSFORMATION)}
     
-    @halve_diagonal = @configuration.grid_length.m / Math::sqrt(2)
+    @halve_diagonal = square_length.m / Math::sqrt(2)
   end
   
   def calculate_relative_polygon(position)
@@ -70,7 +65,7 @@ class Pyramid
     
     # polygon is below (horizontal) inclanation cutoff
     polar_min_max = PolarMinMax.new(relative_polygon)
-    return false if 90 - to_degree(polar_min_max.pl_min) < @configuration.inclination_cutoff - angle_error
+    return false if 90 - to_degree(polar_min_max.pl_min) < CONFIGURATION.inclination_cutoff - angle_error
 
     # polygon is not in any possible sun_direction
     relative_polygon = calculate_relative_polygon(center.transform(SUN_TRANSFORMATION))

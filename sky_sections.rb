@@ -1,10 +1,8 @@
-
-
+require 'solar_integration/globals.rb'
 
 class SkySections
-  def initialize(sun_states, angular_resolution)
-    @angular_resolution = angular_resolution
-    hash_map = get_new_hash_map
+  def initialize(sun_states)
+    hash_map = SphericalHashMap.new
     
     @hash_to_section = Hash.new{|m,k| m[k]=SkySection.new(k)}
     for state in sun_states
@@ -15,10 +13,6 @@ class SkySections
   
   def sections
     return @hash_to_section.values
-  end
-  
-  def get_new_hash_map
-    SphericalHashMap.new(@angular_resolution)
   end
   
 end

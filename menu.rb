@@ -1,3 +1,4 @@
+require 'solar_integration/globals.rb'
 
 class Menu
   def initialize(solar_integration)
@@ -12,7 +13,7 @@ class Menu
     end
 
     add_menu('Configuration ...') do
-      solar_integration.configuration.show
+      CONFIGURATION.show
     end
     
     @menu.add_separator

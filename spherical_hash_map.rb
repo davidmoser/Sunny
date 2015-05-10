@@ -5,12 +5,12 @@ require 'solar_integration/globals.rb'
 # polygon covers (as a chain of line segments)
 # each value may up in multiple 'angle-bins' covered by its chain
 class SphericalHashMap
-  def initialize(resolution)
+  def initialize
     @map = Hash.new{|m,k| m[k]=[]} # empty list is the default
     @azimuth_class = Class.new(AzimuthHashInterval)
-    @azimuth_class.angular_resolution = resolution
+    @azimuth_class.angular_resolution = CONFIGURATION.sky_section_size
     @polar_class = Class.new(PolarHashInterval)
-    @polar_class.angular_resolution = resolution
+    @polar_class.angular_resolution = CONFIGURATION.sky_section_size
   end
   
   def add_value(polygon, value)
@@ -230,7 +230,8 @@ end
 # to debug the hash map
 class HashMapVisualizationSphere
   
-  def initialize(entities, center, map, az_resolution, pl_resolution, sun_transformation)
+  def initialize(entities, center, map, sun_transformation)
+    az_resolution = pl_resolution = CONFIGURATION.sky_section_size
     @group = entities.add_group
     progress = Progress.new(360/az_resolution * 180/pl_resolution, 'Creating hash sphere...')
     @radius = 30
