@@ -11,20 +11,18 @@ require 'solar_integration/configuration.rb'
 require 'solar_integration/sky_sections.rb'
 require 'solar_integration/irradiance_viewer.rb'
 require 'solar_integration/menu.rb'
-require 'solar_integration/web_configuration.rb'
 require 'set'
 
 SKETCHUP_CONSOLE.show
 
 class SolarIntegration
-  attr_reader :web_configuration
+  attr_reader :configuration
   
   include PolygonCollector
   
   def initialize
     @configuration = Configuration.new
     @sun_data = SunData.new
-    @web_configuration = WebConfiguration.new
     Menu.new(self)
   end
   
@@ -51,7 +49,7 @@ class SolarIntegration
   def visualize_shadow_pyramids(face)
     center = find_face_center(face)
     polygons = collect_model_polygons(Sketchup.active_model)
-    sky_sections = SkySections.new([], 10, @configuration)
+    sky_sections = SkySections.new([], @configuration.hash_map_angular_resolution)
     shadow_caster = ShadowCaster.new(polygons, face, sky_sections, @configuration)
     shadow_caster.prepare_center(center)
     shadow_caster.prepare_position(center)

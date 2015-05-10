@@ -7,28 +7,39 @@
         <script src= "web/angular.min.js"></script>
     </head>
     <body>
-        <h3 id="output">You have 0 things selected.</h3>
-        <input type="button" onclick="putData()" value="Put">
-        
-        <div ng-app="sunnyApp" ng-controller="sunnyCtrl">
+        <div id="sunnyApp" ng-app="sunnyApp" ng-controller="sunnyCtrl">
 
-        Number of sun states: <input type="text" ng-model="conf.sun_states"><br>
-        Length of grid tiles (m): <input type="text" ng-model="conf.square_length"><br>
+        Number of sun states: <input type="text" ng-model="data.sun_states" integer /><br>
+        Length of grid tiles (m): <input type="text" ng-model="data.square_length" integer /><br>
         <br>
-        Hash: {{conf.sun_states + " " + conf.square_length}}
+        Hash: {{data.sun_states + " " + data.square_length}}
 
         </div>
         
         <script>
-data = null;
-function putData(data) { window.location.href = 'skp:put_data@' + JSON.stringify(data); }
-function getData() { window.location.href = 'skp:get_data'; return data;}
-            
+function receiveData(data) {
+    $scope = angular.element(document.getElementById('sunnyApp')).scope();
+    $scope.data = data;
+    $scope.$apply();
+}
+
 var app = angular.module('sunnyApp', []);
 app.controller('sunnyCtrl', function($scope) {
-    $scope.conf = getData();
-    $scope.$watchCollection('conf', function (newConf, oldConf) { putData(newConf) });
-});
+    window.location.href = 'skp:force_update_dialog';
+    $scope.$watchCollection('data', function (newData, oldData) {
+        window.location.href = 'skp:return_data@' + JSON.stringify(newData);
+    });
+}).
+directive('integer', function(){
+    return {
+        require: 'ngModel',
+        link: function(scope, ele, attr, ctrl){
+            ctrl.$parsers.unshift(function(viewValue){
+                return parseInt(viewValue, 10);
+            });
+        }
+    };
+});;
         </script>
     </body>
 </html>

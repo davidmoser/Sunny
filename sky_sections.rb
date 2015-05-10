@@ -2,8 +2,7 @@
 
 
 class SkySections
-  def initialize(sun_states, angular_resolution, configuration)
-    @configuration = configuration
+  def initialize(sun_states, angular_resolution)
     @angular_resolution = angular_resolution
     hash_map = get_new_hash_map
     
@@ -19,7 +18,7 @@ class SkySections
   end
   
   def get_new_hash_map
-    @configuration.hash_map_class.new(@angular_resolution)
+    SphericalHashMap.new(@angular_resolution)
   end
   
 end

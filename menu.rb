@@ -12,11 +12,11 @@ class Menu
     end
 
     add_menu('Configuration ...') do
-      solar_integration.update_configuration
+      solar_integration.configuration.show
     end
     
-    add_menu('Nice configuration ...') do
-      solar_integration.web_configuration.show
+    add_menu('Test dialog  ...') do
+      solar_integration.configuration.outside_call_test
     end
     
     @menu.add_separator

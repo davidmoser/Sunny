@@ -1,83 +1,12 @@
 require 'solar_integration/progress.rb'
 require 'solar_integration/globals.rb'
 
-class AbstractHashMap
-  def initialize(resolution)
-    @map = Hash.new{|m,k| m[k]=[]} # empty list is the default
-  end
-  
-  def add_value(polygon, value)
-    raise 'need to implement' 
-  end
-  
-  def get_values(point)
-    return @map[get_hash(point)]
-  end
-  
-  def all_values
-    return @map.values
-  end
-  
-  def get_hash(point)
-    raise 'need to implement' 
-  end
-  
-  def get_values_for_hash(hash)
-    return @map[hash]
-  end
-end
-
-# Simpler hashes for comparison
-class NoHashMap < AbstractHashMap
-  def add_value(polygon, value)
-    @map[0].push value
-  end
-  
-  def get_hash(point)
-    return 0
-  end
-end
-
-class AzimuthHashMap < AbstractHashMap
-  def initialize(resolution)
-    super(resolution)
-    @azimuth_class = Class.new(AzimuthHashInterval)
-    @azimuth_class.angular_resolution = resolution
-  end
-  
-  def add_value(polygon, value)
-    azimuth_hashes = @azimuth_class.new(polygon)
-    azimuth_hashes.hash_array.each{|h| @map[h].push value}
-  end
-  
-  def get_hash(point)
-    return @azimuth_class.calculate_hash(point)
-  end
-end
-
-class PolarHashMap < AbstractHashMap
-  def initialize(resolution)
-    super(resolution) # empty list is the default
-    @polar_class = Class.new(PolarHashInterval)
-    @polar_class.angular_resolution = resolution
-  end
-  
-  def add_value(polygon, value)
-    polar_hashes = @polar_class.new(polygon)
-    polar_hashes.hash_array.each{|h| @map[h].push value}
-  end
-  
-  def get_hash(point)
-    return @polar_class.calculate_hash(point)
-  end
-end
-
 # categorize and retrieve values according to the spherical angles that the
 # polygon covers (as a chain of line segments)
 # each value may up in multiple 'angle-bins' covered by its chain
-class SphericalHashMap < AbstractHashMap
+class SphericalHashMap
   def initialize(resolution)
-    super(resolution)
+    @map = Hash.new{|m,k| m[k]=[]} # empty list is the default
     @azimuth_class = Class.new(AzimuthHashInterval)
     @azimuth_class.angular_resolution = resolution
     @polar_class = Class.new(PolarHashInterval)
@@ -106,6 +35,18 @@ class SphericalHashMap < AbstractHashMap
   
   def delete_value(keys, value)
     keys.each{|k| @map[k].delete(value)}
+  end
+  
+    def get_values(point)
+    return @map[get_hash(point)]
+  end
+  
+  def all_values
+    return @map.values
+  end
+  
+  def get_values_for_hash(hash)
+    return @map[hash]
   end
 end
 
