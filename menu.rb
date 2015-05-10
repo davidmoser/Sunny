@@ -15,10 +15,6 @@ class Menu
       solar_integration.configuration.show
     end
     
-    add_menu('Test dialog  ...') do
-      solar_integration.configuration.outside_call_test
-    end
-    
     @menu.add_separator
     
     add_faces_menu('Visualize spherical hash map', :visualize_hash_map)

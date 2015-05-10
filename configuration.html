@@ -11,9 +11,15 @@
 
         Number of sun states: <input type="text" ng-model="data.sun_states" integer /><br>
         Length of grid tiles (m): <input type="text" ng-model="data.square_length" integer /><br>
+        Total solar irradiance (W/m^2): <input type="text" ng-model="data.tsi" integer /><br>
         <br>
-        Hash: {{data.sun_states + " " + data.square_length}}
-
+        Advanced settings <input type="checkbox" ng-model="data.advanced_options_on"/><br>
+        <div ng-show="data.advanced_options_on">
+        Infer square length from face: <input type="checkbox" ng-model="data.infer_square_length_from_face" /><br>
+        Square length (m): <input type="text" ng-model="data.square_length" integer ng-disabled="data.infer_square_length_from_face"/><br>
+        Inclination cutoff (degree): <input type="text" ng-model="data.inclination_cutoff" integer /><br>
+        Sky section size (degree): <input type="text" ng-model="data.sky_section_size" integer /><br>
+        </div>
         </div>
         
         <script>
@@ -29,6 +35,8 @@ app.controller('sunnyCtrl', function($scope) {
     $scope.$watchCollection('data', function (newData, oldData) {
         window.location.href = 'skp:return_data@' + JSON.stringify(newData);
     });
+    
+    
 }).
 directive('integer', function(){
     return {
