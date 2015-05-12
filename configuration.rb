@@ -2,7 +2,7 @@ require 'solar_integration/dhtml_dialog.rb'
 require 'solar_integration/data_collector.rb'
 
 class Configuration < DhtmlDialog
-  attr_reader :sun_states, :grid_length, :tsi,
+  attr_reader :sun_states, :tile_length, :tsi,
     :infer_square_length_from_face, :square_length, :inclination_cutoff, :sky_section_size,
     :active_data_collectors
   
@@ -12,11 +12,11 @@ class Configuration < DhtmlDialog
     @skip_variables = ['@active_data_collectors']
     super
     @sun_states = 1000
-    @grid_length = 30 #cm
+    @tile_length = 0.3 #m
     @tsi = 700 # W/m^2
     @advanced_options_on = false
     @infer_square_length_from_face = true
-    @square_length = 300 #cm
+    @square_length = 3 #m
     @inclination_cutoff = 10 # degrees
     @sky_section_size = 10 # degrees
     @active_data_collectors = [TotalIrradianceSquares] # not configurable at the moment

@@ -9,16 +9,16 @@
     <body>
         <div id="sunnyApp" ng-app="sunnyApp" ng-controller="sunnyCtrl">
 
-        Number of sun states: <input type="text" ng-model="data.sun_states" integer /><br>
-        Length of grid tiles (m): <input type="text" ng-model="data.square_length" integer /><br>
-        Total solar irradiance (W/m^2): <input type="text" ng-model="data.tsi" integer /><br>
+        Number of sun states: <input type="number" ng-model="data.sun_states" integer /><br>
+        Length of grid tiles (m): <input type="number" ng-model="data.tile_length" float /><br>
+        Total solar irradiance (W/m^2): <input type="number" ng-model="data.tsi" float /><br>
         <br>
         Advanced settings <input type="checkbox" ng-model="data.advanced_options_on"/><br>
         <div ng-show="data.advanced_options_on">
         Infer square length from face: <input type="checkbox" ng-model="data.infer_square_length_from_face" /><br>
-        Square length (m): <input type="text" ng-model="data.square_length" integer ng-disabled="data.infer_square_length_from_face"/><br>
-        Inclination cutoff (degree): <input type="text" ng-model="data.inclination_cutoff" integer /><br>
-        Sky section size (degree): <input type="text" ng-model="data.sky_section_size" integer /><br>
+        Square length (m): <input type="number" ng-model="data.square_length" float ng-disabled="data.infer_square_length_from_face"/><br>
+        Inclination cutoff (degree): <input type="number" ng-model="data.inclination_cutoff" integer /><br>
+        Sky section size (degree): <input type="number" ng-model="data.sky_section_size" integer /><br>
         </div>
         </div>
         
@@ -47,7 +47,16 @@ directive('integer', function(){
             });
         }
     };
-});;
+}).directive('float', function(){
+    return {
+        require: 'ngModel',
+        link: function(scope, ele, attr, ctrl){
+            ctrl.$parsers.unshift(function(viewValue){
+                return parseFloat(viewValue, 10);
+            });
+        }
+    };
+});
         </script>
     </body>
 </html>
