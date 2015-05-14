@@ -13,16 +13,16 @@ class Grid
   def initialize(face)
     @face = face
     @normal = face.normal
-    @tile_length = CONFIGURATION.tile_length
+    @tile_length = $configuration.tile_length
     
     bounding_box = calculate_flat_bounding_box(face)
     v1 = bounding_box[1] - bounding_box[0]
     v2 = bounding_box[3] - bounding_box[0]
     
-    if CONFIGURATION.infer_square_length_from_face
+    if $configuration.infer_square_length_from_face
       @square_length = [v1.length, v2.length].min
     else
-      @square_length = CONFIGURATION.square_length
+      @square_length = $configuration.square_length
     end
     @subdivisions = (@square_length.to_f / @tile_length).ceil
     @square_length = @subdivisions * @tile_length

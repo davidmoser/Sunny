@@ -2,38 +2,46 @@ require 'solar_integration/progress.rb'
 require 'solar_integration/globals.rb'
 
 class DataCollector
+  # during shadow calculation the current point for which all sun states
+  # are rendered, i.e. shadow is checked, is set to this variable
   attr_writer :current_point
   
   def initialize(grid)
-    raise 'need to implement'
-  end
-  
-  # sun shines with strength irradiance on @current_point
-  # if @current_point is in the shadow then irradiance=nil
-  def put(sun_state, irradiance)
-    raise 'need to implement'
   end
   
   # for performance reasons the sky is split in sections
-  # here the data is gathered for all sun_states in a section
+  # before rendering shadows all sections are rendered with all sun states
+  # i.e. as if there was no shadow at all, that accumulated data for a section
+  # can then be used when during shadow calculation it is evident that there's
+  # no shadow cast for a particular section, in which case put_section is called
   def prepare_section(sun_state, irradiance, section)
-    raise 'need to implement'
+  end
+  
+  # all sections have been rendered
+  def section_preparation_finished
   end
 
+  # called during shadow rendering.
+  # sun shines with strength irradiance on @current_point
+  # if @current_point is in the shadow then irradiance=nil.
+  def put(sun_state, irradiance)
+  end
+  
   # if for @current_point there aren't any shadow casting polygons
-  # then put_section is called instead of put
+  # from a certain sky section, then this method is called instead of put
   def put_section(section)
-    raise 'need to implement'
   end
   
   def wrapup
-    raise 'need to implement'
   end
 end
 
-class TotalIrradianceSquares < DataCollector
+class TotalIrradianceTiles < DataCollector
+  attr_accessor :group, :tiles, :max_irradiance, :color_bar
+  
   def initialize(grid)
     @group = grid.face.parent.entities.add_group
+    @group.name = 'Irradiance Tiles'
     
     progress = Progress.new(grid.number_of_subsquares, 'Creating tiles...')
     Sketchup.active_model.start_operation('Creating tiles', true)
@@ -46,34 +54,83 @@ class TotalIrradianceSquares < DataCollector
     end
     Sketchup.active_model.commit_operation
     
+    @coloring_allowed = false
     @section_irradiances = Hash.new(0)
-  end
-  
-  def put(sun_state, irradiance)
-    return if not irradiance
-    @tiles[@current_point].irradiance += irradiance
+    $irradiance_statistics.add_tiles(self)
   end
   
   def prepare_section(sun_state, irradiance, section)
     @section_irradiances[section] += irradiance
   end
+  
+  def section_preparation_finished
+    @max_irradiance = @section_irradiances.values.reduce(:+)
+    $irradiance_statistics.update_tile_colors
+  end
+  
+  def current_point=(current_point)
+    if @current_tile
+      @current_tile.recolor(@color_bar)
+    end
+    @current_tile = @tiles[current_point]
+  end
+  
+  def put(sun_state, irradiance)
+    return if not irradiance
+    @current_tile.irradiance += irradiance
+  end
 
   def put_section(section)
-    @tiles[@current_point].irradiance += @section_irradiances[section]
+    @current_tile.irradiance += @section_irradiances[section]
   end
   
   def wrapup
-    max = @section_irradiances.values.reduce(:+)
-    color_bar = ColorBar.new(max*0.8, max)
-    progress = Progress.new(@tiles.length, 'Coloring tiles...')
-    Sketchup.active_model.start_operation('Coloring tiles', true)
+    @current_tile.recolor(@color_bar)
     @tiles.values.each do |s|
-      s.face.material=color_bar.to_color(s.irradiance)
       s.face.set_attribute 'solar_integration', 'total_irradiance', s.irradiance
-      progress.work
     end
-    Sketchup.active_model.commit_operation
+    @coloring_allowed = true
   end
+  
+  def update_tile_colors
+    return if not @coloring_allowed
+    for tile in @tiles.values
+      tile.recolor(@color_bar)
+    end
+  end
+end
+
+# singleton to hold all rendered tiles, color them, sum up irradiance
+class IrradianceStatistics
+  attr_reader :tile_groups, :color_by_absolute_value
+  
+  def initialize
+    @tiless = []
+    @color_by_absolute_value = true
+  end
+  
+  def add_tiles(tiles)
+    @tiless.push tiles
+  end
+  
+  def create_color_bar(tiles)
+    if @color_by_absolute_value
+      max = @tiless.collect{|t|t.max_irradiance}.max
+      color_bar = AbsoluteColorBar.new(0.8*max, max)
+    else
+      color_bar = RelativeColorBar.new(0.8,1)
+      color_bar.max_number = tiles.max_irradiance
+    end
+    return color_bar
+  end
+  
+  def update_tile_colors
+    for tiles in @tiless
+      tiles.color_bar = create_color_bar(tiles)
+      tiles.update_tile_colors
+    end
+  end
+  
 end
 
 # a square has a @center, @irradiance information and the reference
@@ -88,17 +145,33 @@ class Tile
     @face = group.entities.add_face([corner, corner+side1, corner+side1+side2, corner+side2])
     @face.edges.each{|e|e.hidden=true}
   end
+  
+  def recolor(color_bar)
+    @face.material=color_bar.to_color(@irradiance)
+  end
 end
 
-class ColorBar
+class AbsoluteColorBar
   def initialize(min, max)
     @min = min
     @max = max
   end
+  
   def to_color(number)
     return [(number-@min) / (@max-@min), 0, 0]
   end
 end
+
+class RelativeColorBar < AbsoluteColorBar
+  attr_accessor :max_number
+  
+  def to_color(number)
+    fraction = number / @max_number
+    return [(fraction-@min) / (@max-@min), 0, 0]
+  end
+end
+
+$irradiance_statistics = IrradianceStatistics.new
 
 class PolarAngleIrradianceHistogram < DataCollector
   def initialize(grid)

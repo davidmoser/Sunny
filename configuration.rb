@@ -19,7 +19,7 @@ class Configuration < DhtmlDialog
     @square_length = 3 #m
     @inclination_cutoff = 10 # degrees
     @sky_section_size = 10 # degrees
-    @active_data_collectors = [TotalIrradianceSquares] # not configurable at the moment
+    @active_data_collectors = [TotalIrradianceTiles] # not configurable at the moment
   end
   
 end

@@ -15,6 +15,7 @@ module PolygonCollector
   end
 
   def collect_from_entity(entity)
+    return [] if entity.hidden?
     case entity
     when Sketchup::Group
       return collect_from_entities(entity.entities, entity.transformation)

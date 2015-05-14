@@ -24,4 +24,4 @@ SUN_TRANSFORMATION = Geom::Transformation.rotation(ORIGIN, X_AXIS, sun_angle) \
                   
 INSTALLATION_FOLDER = 'Plugins/solar_integration'
 
-CONFIGURATION = Configuration.new
+$configuration = Configuration.new

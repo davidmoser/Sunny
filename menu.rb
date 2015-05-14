@@ -13,7 +13,7 @@ class Menu
     end
 
     add_menu('Configuration ...') do
-      CONFIGURATION.show
+      $configuration.show
     end
     
     @menu.add_separator

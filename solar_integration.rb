@@ -31,7 +31,7 @@ class SolarIntegration
   def visualize_hash_map(face)
     center = find_face_center(face)
     polygons = collect_model_polygons(Sketchup.active_model)
-    shadow_caster = ShadowCaster.new(polygons, face, CONFIGURATION.square_length)
+    shadow_caster = ShadowCaster.new(polygons, face, $configuration.square_length)
     shadow_caster.prepare_center(center)
     shadow_caster.prepare_position(center)
     HashMapVisualizationSphere.new(face.parent.entities, center, shadow_caster.hash_map, 10, 10, SUN_TRANSFORMATION)
@@ -40,7 +40,7 @@ class SolarIntegration
   def visualize_shadow_pyramids(face)
     center = find_face_center(face)
     polygons = collect_model_polygons(Sketchup.active_model)
-    shadow_caster = ShadowCaster.new(polygons, face, CONFIGURATION.square_length)
+    shadow_caster = ShadowCaster.new(polygons, face, $configuration.square_length)
     shadow_caster.prepare_center(center)
     shadow_caster.prepare_position(center)
     group = face.parent.entities.add_group
@@ -69,10 +69,12 @@ class SolarIntegration
     grid = Grid.new(face)
     polygons = collect_model_polygons(Sketchup.active_model)
     
-    data_collectors = CONFIGURATION.active_data_collectors.collect { |c| c.new(grid) }
+    data_collectors = $configuration.active_data_collectors.collect { |c| c.new(grid) }
     irradiances = calculate_irradiances(@sun_data, grid.normal)
+    
     sky_sections = SkySections.new(irradiances.keys)
     sky_sections.sections.each{|s| render_section(s, irradiances, data_collectors)}
+    data_collectors.each{|c|c.section_preparation_finished}
     
     shadow_caster = ShadowCaster.new(polygons, face, grid.square_length)
     
@@ -82,6 +84,7 @@ class SolarIntegration
     @with_shadow = 0
     @without_shadow = 0
     progress = Progress.new(grid.number_of_subsquares, 'Integrating irradiances...')
+    Sketchup.active_model.start_operation('Integrating irradiances', true)
     for square in grid.squares
       t1 = Time.new
       shadow_caster.prepare_center(square.center)
@@ -99,13 +102,13 @@ class SolarIntegration
       prepare_center_t += t2-t1
     end
     data_collectors.each { |c| c.wrapup }
+    Sketchup.active_model.commit_operation
     puts "prepare center #{prepare_center_t.round(2)}, "\
       "prepare position #{prepare_position_t.round(2)}, "\
       "render time #{render_t.round(2)}"
     puts "sections with shadow #{@with_shadow}, without shadow #{@without_shadow}"
   end
   
-  # not really irradiance but energy in Wh
   def calculate_irradiances(sun_data, normal)
     irradiances = Hash.new
     for state in sun_data.states

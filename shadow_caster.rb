@@ -65,7 +65,7 @@ class Pyramid
     
     # polygon is below (horizontal) inclanation cutoff
     polar_min_max = PolarMinMax.new(relative_polygon)
-    return false if 90 - to_degree(polar_min_max.pl_min) < CONFIGURATION.inclination_cutoff - angle_error
+    return false if 90 - to_degree(polar_min_max.pl_min) < $configuration.inclination_cutoff - angle_error
 
     # polygon is not in any possible sun_direction
     relative_polygon = calculate_relative_polygon(center.transform(SUN_TRANSFORMATION))

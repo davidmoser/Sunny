@@ -14,10 +14,10 @@ class SunData
   # day is very bad sampling (small differences between days, large differences
   # between hours).
   def update
-    return if @tsi==CONFIGURATION.tsi and @number_of_states==CONFIGURATION.sun_states
+    return if @tsi==$configuration.tsi and @number_of_states==$configuration.sun_states
     
-    @tsi = CONFIGURATION.tsi
-    @number_of_states = CONFIGURATION.sun_states
+    @tsi = $configuration.tsi
+    @number_of_states = $configuration.sun_states
     @states = Array.new
     
     minutes_per_year = 365 * 24 * 60 * 60
