@@ -18,6 +18,9 @@ class SolarIntegration
   include PolygonCollector
   
   def initialize
+    $configuration = Configuration.new
+    $irradiance_statistics = IrradianceStatistics.new
+    
     @sun_data = SunData.new
     Menu.new(self)
   end

@@ -1,5 +1,6 @@
 require 'solar_integration/progress.rb'
 require 'solar_integration/globals.rb'
+require 'solar_integration/dhtml_dialog.rb'
 
 class DataCollector
   # during shadow calculation the current point for which all sun states
@@ -101,12 +102,16 @@ class TotalIrradianceTiles < DataCollector
 end
 
 # singleton to hold all rendered tiles, color them, sum up irradiance
-class IrradianceStatistics
-  attr_reader :tile_groups, :color_by_absolute_value
+class IrradianceStatistics < DhtmlDialog
+  attr_reader :tile_groups, :color_by_relative_value
   
   def initialize
+    @dialog = UI::WebDialog.new('Nice configuration', true, 'solar_integration_configuration', 400, 400, 150, 150, true)
+    @template_name = 'irradiance_statistics.html'
+    @skip_variables = ['@tiless']
+    super()
     @tiless = []
-    @color_by_absolute_value = true
+    @color_by_relative_value = true
   end
   
   def add_tiles(tiles)
@@ -114,12 +119,12 @@ class IrradianceStatistics
   end
   
   def create_color_bar(tiles)
-    if @color_by_absolute_value
-      max = @tiless.collect{|t|t.max_irradiance}.max
-      color_bar = AbsoluteColorBar.new(0.8*max, max)
-    else
+    if @color_by_relative_value
       color_bar = RelativeColorBar.new(0.8,1)
       color_bar.max_number = tiles.max_irradiance
+    else
+      max = @tiless.collect{|t|t.max_irradiance}.max
+      color_bar = AbsoluteColorBar.new(0.8*max, max)
     end
     return color_bar
   end
@@ -129,6 +134,11 @@ class IrradianceStatistics
       tiles.color_bar = create_color_bar(tiles)
       tiles.update_tile_colors
     end
+  end
+  
+  def color_by_relative_value=(color_by_relative_value)
+    @color_by_relative_value = color_by_relative_value
+    update_tile_colors
   end
   
 end
@@ -170,8 +180,6 @@ class RelativeColorBar < AbsoluteColorBar
     return [(fraction-@min) / (@max-@min), 0, 0]
   end
 end
-
-$irradiance_statistics = IrradianceStatistics.new
 
 class PolarAngleIrradianceHistogram < DataCollector
   def initialize(grid)

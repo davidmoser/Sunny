@@ -16,6 +16,10 @@ class Menu
       $configuration.show
     end
     
+    add_menu('Statistics ...') do
+      $irradiance_statistics.show
+    end
+    
     @menu.add_separator
     
     add_faces_menu('Visualize spherical hash map', :visualize_hash_map)

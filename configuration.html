@@ -59,10 +59,10 @@ var app = angular.module('sunnyApp', []);
 app.controller('sunnyCtrl', function($scope) {
     window.location.href = 'skp:force_update_dialog';
     $scope.$watchCollection('data', function (newData, oldData) {
-        window.location.href = 'skp:return_data@' + JSON.stringify(newData);
+        if(newData !== oldData) {
+           window.location.href = 'skp:return_data@' + JSON.stringify(newData);
+        }
     });
-    
-    
 }).
 directive('integer', function(){
     return {

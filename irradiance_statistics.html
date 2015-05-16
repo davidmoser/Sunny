@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Sunny Statistics</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=0.5">
+        <link rel="stylesheet" href="web/bootstrap.min.css">
+        <script src="web/jquery.min.js"></script>
+        <script src="web/bootstrap.min.js"></script>
+        <script src= "web/angular.min.js"></script>
+    </head>
+    <body>
+        <div id="sunnyApp" class="container-fluid" ng-app="sunnyApp" ng-controller="sunnyCtrl">
+            <form class="form-horizontal" role="form">
+                <div class="form-group form-group-sm">
+                    <div class="col-sm-12"> 
+                        <div class="checkbox">
+                            <label><input type="checkbox" ng-model="data.color_by_relative_value"/>
+                                Use relative color scale
+                                <a href="#" data-toggle="tooltip" title="(colors faces independently, with 100% being the maximum possible irradiance for a face)">
+                                help
+                                </a>
+                            </label> 
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <script>
+function receiveData(data) {
+    $scope = angular.element(document.getElementById('sunnyApp')).scope();
+    $scope.data = data;
+    $scope.$apply();
+}
+
+var app = angular.module('sunnyApp', []);
+app.controller('sunnyCtrl', function($scope) {
+    window.location.href = 'skp:force_update_dialog';
+    $scope.$watchCollection('data', function (newData, oldData) {
+        if(newData !== oldData) {
+            window.location.href = 'skp:return_data@' + JSON.stringify(newData);
+        }
+    });
+    
+    
+}).
+directive('integer', function(){
+    return {
+        require: 'ngModel',
+        link: function(scope, ele, attr, ctrl){
+            ctrl.$parsers.unshift(function(viewValue){
+                return parseInt(viewValue, 10);
+            });
+        }
+    };
+}).directive('float', function(){
+    return {
+        require: 'ngModel',
+        link: function(scope, ele, attr, ctrl){
+            ctrl.$parsers.unshift(function(viewValue){
+                return parseFloat(viewValue, 10);
+            });
+        }
+    };
+});
+        </script>
+    </body>
+</html>

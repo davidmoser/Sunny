@@ -19,9 +19,10 @@ class DhtmlDialog
     @dialog.set_file( path )
     
     @dialog.add_action_callback('return_data') do |dialog, json|
+      puts json
       data = JSON.parse(json, symbolize_names: true)
       data.each do |k, v|
-        instance_variable_set("@#{k}",v)
+        self.send("#{k}=", v)
       end
     end
     

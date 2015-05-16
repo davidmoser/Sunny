@@ -2,9 +2,9 @@ require 'solar_integration/dhtml_dialog.rb'
 require 'solar_integration/data_collector.rb'
 
 class Configuration < DhtmlDialog
-  attr_reader :sun_states, :tile_length, :tsi,
+  attr_accessor :sun_states, :tile_length, :tsi,
     :infer_square_length_from_face, :square_length, :inclination_cutoff, :sky_section_size,
-    :active_data_collectors
+    :active_data_collectors, :advanced_options_on
   
   def initialize
     @dialog = UI::WebDialog.new('Nice configuration', true, 'solar_integration_configuration', 400, 400, 150, 150, true)
