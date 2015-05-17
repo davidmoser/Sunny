@@ -5,9 +5,12 @@ class IrradianceViewer
     ph.do_pick(x,y)
     entity = ph.best_picked
     if entity
-      irradiance = entity.get_attribute 'solar_integration', 'total_irradiance'
-      if irradiance
-        view.tooltip = irradiance.to_s
+      irradiance = entity.get_attribute 'solar_integration', 'irradiance'
+      if irradiance and irradiance!=@current_irradiance
+        @current_irradiance = irradiance
+        relative_irradiance = entity.get_attribute 'solar_integration', 'relative_irradiance'
+        view.tooltip = "irradiance: #{irradiance}, relative: #{relative_irradiance}"
+        $irradiance_statistics.set_color_bar_value( irradiance, relative_irradiance )
       end
     else
       view.tooltip = ''

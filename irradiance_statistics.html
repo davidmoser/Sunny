@@ -8,6 +8,9 @@
         <script src="web/jquery.min.js"></script>
         <script src="web/bootstrap.min.js"></script>
         <script src= "web/angular.min.js"></script>
+        <script src= "web/d3.min.js"></script>
+        <script src= "web/colorbar.js"></script>
+        <!-- saved from url=(0014)about:internet -->
     </head>
     <body>
         <div id="sunnyApp" class="container-fluid" ng-app="sunnyApp" ng-controller="sunnyCtrl">
@@ -25,6 +28,7 @@
                     </div>
                 </div>
             </form>
+            <svg style="width:200px; height:600px;"></svg>
         </div>
         <script>
 function receiveData(data) {
@@ -32,6 +36,9 @@ function receiveData(data) {
     $scope.data = data;
     $scope.$apply();
 }
+
+
+
 
 var app = angular.module('sunnyApp', []);
 app.controller('sunnyCtrl', function($scope) {
@@ -42,6 +49,19 @@ app.controller('sunnyCtrl', function($scope) {
         }
     });
     
+    $scope.scale = d3.scale.linear()
+        .domain([0,100])
+        .range(["black","red"]);
+
+    colorbar = Colorbar()
+        .origin([50,20])
+        .scale($scope.scale)
+        .barlength(300)
+        .thickness(30)
+        .orient('vertical');
+
+    bar =  d3.selectAll("svg").append("g").attr("id","colorbar");
+    d3.selectAll("#colorbar").call(colorbar);
     
 }).
 directive('integer', function(){

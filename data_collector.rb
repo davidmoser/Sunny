@@ -38,7 +38,7 @@ class DataCollector
 end
 
 class TotalIrradianceTiles < DataCollector
-  attr_accessor :group, :tiles, :max_irradiance, :color_bar
+  attr_accessor :group, :tiles, :max_irradiance
   
   def initialize(grid)
     @group = grid.face.parent.entities.add_group
@@ -57,6 +57,7 @@ class TotalIrradianceTiles < DataCollector
     
     @coloring_allowed = false
     @section_irradiances = Hash.new(0)
+    @color_bar = $irradiance_statistics.color_bar
     $irradiance_statistics.add_tiles(self)
   end
   
@@ -66,12 +67,12 @@ class TotalIrradianceTiles < DataCollector
   
   def section_preparation_finished
     @max_irradiance = @section_irradiances.values.reduce(:+)
-    $irradiance_statistics.update_tile_colors
+    $irradiance_statistics.update_color_bar
   end
   
   def current_point=(current_point)
     if @current_tile
-      @current_tile.recolor(@color_bar)
+      tile_wrapup(@current_tile)
     end
     @current_tile = @tiles[current_point]
   end
@@ -86,99 +87,129 @@ class TotalIrradianceTiles < DataCollector
   end
   
   def wrapup
-    @current_tile.recolor(@color_bar)
+    tile_wrapup(@current_tile)
     @tiles.values.each do |s|
-      s.face.set_attribute 'solar_integration', 'total_irradiance', s.irradiance
+      s.face.set_attribute 'solar_integration', 'irradiance', s.irradiance
+      s.face.set_attribute 'solar_integration', 'relative_irradiance', s.relative_irradiance
     end
     @coloring_allowed = true
+  end
+  
+  def tile_wrapup(tile)
+    tile.relative_irradiance = tile.irradiance / @max_irradiance
+    @color_bar.recolor(tile)
   end
   
   def update_tile_colors
     return if not @coloring_allowed
     for tile in @tiles.values
-      tile.recolor(@color_bar)
+      @color_bar.recolor(tile)
     end
   end
 end
 
 # singleton to hold all rendered tiles, color them, sum up irradiance
 class IrradianceStatistics < DhtmlDialog
-  attr_reader :tile_groups, :color_by_relative_value
+  attr_reader :tile_groups, :color_by_relative_value, :color_bar,
+    :color_bar_value
   
   def initialize
     @dialog = UI::WebDialog.new('Nice configuration', true, 'solar_integration_configuration', 400, 400, 150, 150, true)
     @template_name = 'irradiance_statistics.html'
-    @skip_variables = ['@tiless']
+    @skip_variables = ['@tiless','@color_bar']
     super()
     @tiless = []
     @color_by_relative_value = true
+    @color_bar = ColorBar.new
+    update_color_bar
   end
   
   def add_tiles(tiles)
     @tiless.push tiles
   end
   
-  def create_color_bar(tiles)
+  def update_color_bar
+    old_color_bar = @color_bar.clone
+    @color_bar.color_by_relative_value = @color_by_relative_value
     if @color_by_relative_value
-      color_bar = RelativeColorBar.new(0.8,1)
-      color_bar.max_number = tiles.max_irradiance
+      @color_bar.min = 0.8
+      @color_bar.max = 1
     else
-      max = @tiless.collect{|t|t.max_irradiance}.max
-      color_bar = AbsoluteColorBar.new(0.8*max, max)
+      max = active_tiless.collect{|t|t.max_irradiance}.max
+      if max
+        @color_bar.min = 0.8 * max
+        @color_bar.max = max
+      end
     end
-    return color_bar
+    if not @color_bar == old_color_bar
+      update_tile_colors
+    end
   end
   
   def update_tile_colors
-    for tiles in @tiless
-      tiles.color_bar = create_color_bar(tiles)
+    update_color_bar
+    for tiles in active_tiless
       tiles.update_tile_colors
     end
   end
   
   def color_by_relative_value=(color_by_relative_value)
-    @color_by_relative_value = color_by_relative_value
-    update_tile_colors
+    if not @color_by_relative_value == color_by_relative_value
+      @color_by_relative_value = color_by_relative_value
+      update_color_bar
+    end
   end
   
+  def set_color_bar_value(irradiance, relative_irradiance)
+    if @color_by_relative_value
+      @color_bar_value = relative_irradiance
+    else
+      @color_bar_value = irradiance
+    end
+    puts @color_bar_value
+    update_dialog
+  end
+  
+  def active_tiless
+    @tiless.reject! {|t| t.group.deleted?}
+    return @tiless
+  end
 end
 
 # a square has a @center, @irradiance information and the reference
 # to its visual representation @face
 class Tile
-  attr_accessor :irradiance, :face
+  attr_accessor :irradiance, :relative_irradiance, :face
   
   def initialize(group, center, side1, side2)
-    @irradiance = 0
     @center = center
     corner = center + Geom::Vector3d.linear_combination(-0.5,side1,-0.5,side2)
     @face = group.entities.add_face([corner, corner+side1, corner+side1+side2, corner+side2])
     @face.edges.each{|e|e.hidden=true}
-  end
-  
-  def recolor(color_bar)
-    @face.material=color_bar.to_color(@irradiance)
+    @irradiance = 0
   end
 end
 
-class AbsoluteColorBar
-  def initialize(min, max)
-    @min = min
-    @max = max
+class ColorBar
+  attr_accessor :min, :max, :color_by_relative_value
+  
+  def recolor(tile)
+    if @color_by_relative_value
+      number = tile.relative_irradiance
+    else
+      number = tile.irradiance
+    end
+    tile.face.material = [(number-@min) / (@max-@min), 0, 0]
   end
   
-  def to_color(number)
-    return [(number-@min) / (@max-@min), 0, 0]
+  def ==(o)
+    o.class == self.class && o.state == state
   end
-end
+  
+  def state
+    [@min, @max, @color_by_relative_value]
+  end
 
-class RelativeColorBar < AbsoluteColorBar
-  attr_accessor :max_number
-  
-  def to_color(number)
-    fraction = number / @max_number
-    return [(fraction-@min) / (@max-@min), 0, 0]
-  end
 end
 
 class PolarAngleIrradianceHistogram < DataCollector

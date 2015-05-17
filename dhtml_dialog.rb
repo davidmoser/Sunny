@@ -17,6 +17,7 @@ class DhtmlDialog
     
     path = Sketchup.find_support_file @template_name, INSTALLATION_FOLDER
     @dialog.set_file( path )
+    @dialog.set_full_security
     
     @dialog.add_action_callback('return_data') do |dialog, json|
       puts json
