@@ -20,7 +20,7 @@
                         <div class="checkbox">
                             <label><input type="checkbox" ng-model="data.color_by_relative_value"/>
                                 Use relative color scale
-                                <a href="#" data-toggle="tooltip" title="(colors faces independently, with 100% being the maximum possible irradiance for a face)">
+                                <a href="#" data-toggle="tooltip" title="faces are colored independently, with 100% being the maximum possible irradiance for a face">
                                 help
                                 </a>
                             </label> 
@@ -28,7 +28,7 @@
                     </div>
                 </div>
             </form>
-            <svg style="width:200px; height:600px;"></svg>
+            <svg style="width:300px; height:350px;"></svg>
         </div>
         <script>
 function receiveData(data) {
@@ -36,9 +36,6 @@ function receiveData(data) {
     $scope.data = data;
     $scope.$apply();
 }
-
-
-
 
 var app = angular.module('sunnyApp', []);
 app.controller('sunnyCtrl', function($scope) {
@@ -49,19 +46,34 @@ app.controller('sunnyCtrl', function($scope) {
         }
     });
     
-    $scope.scale = d3.scale.linear()
-        .domain([0,100])
-        .range(["black","red"]);
+    d3.selectAll("svg").append("g").attr("id","colorbar");
+    
+    $scope.$watch('data.color_by_relative_value', function(colorByRelativeValue, oldData) {
+        var max;
+        if(colorByRelativeValue) {
+            max = 100;
+        } else {
+            max = $scope.data.max_irradiance;
+        }
+        
+        $scope.scale = d3.scale.linear()
+            .domain([0.8*max,max])
+            .range(["black","red"])
+            .clamp(true);
 
-    colorbar = Colorbar()
-        .origin([50,20])
-        .scale($scope.scale)
-        .barlength(300)
-        .thickness(30)
-        .orient('vertical');
+        colorbar = Colorbar()
+            .origin([0,0])
+            .scale($scope.scale)
+            .barlength(300)
+            .thickness(20)
+            .orient('vertical');
 
-    bar =  d3.selectAll("svg").append("g").attr("id","colorbar");
-    d3.selectAll("#colorbar").call(colorbar);
+        $scope.pointer = d3.selectAll("#colorbar").call(colorbar);
+    });
+    
+    $scope.$watch('data.color_bar_value', function(colorBarValue, oldData) {
+        $scope.pointer.pointTo(colorBarValue);
+    });
     
 }).
 directive('integer', function(){

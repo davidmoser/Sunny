@@ -96,7 +96,7 @@ class TotalIrradianceTiles < DataCollector
   end
   
   def tile_wrapup(tile)
-    tile.relative_irradiance = tile.irradiance / @max_irradiance
+    tile.relative_irradiance = tile.irradiance * 100 / @max_irradiance
     @color_bar.recolor(tile)
   end
   
@@ -110,8 +110,8 @@ end
 
 # singleton to hold all rendered tiles, color them, sum up irradiance
 class IrradianceStatistics < DhtmlDialog
-  attr_reader :tile_groups, :color_by_relative_value, :color_bar,
-    :color_bar_value
+  attr_accessor :tile_groups, :color_by_relative_value, :color_bar,
+    :color_bar_value, :max_irradiance
   
   def initialize
     @dialog = UI::WebDialog.new('Nice configuration', true, 'solar_integration_configuration', 400, 400, 150, 150, true)
@@ -121,6 +121,7 @@ class IrradianceStatistics < DhtmlDialog
     @tiless = []
     @color_by_relative_value = true
     @color_bar = ColorBar.new
+    @max_irradiance = 10000
     update_color_bar
   end
   
@@ -131,16 +132,16 @@ class IrradianceStatistics < DhtmlDialog
   def update_color_bar
     old_color_bar = @color_bar.clone
     @color_bar.color_by_relative_value = @color_by_relative_value
-    if @color_by_relative_value
-      @color_bar.min = 0.8
-      @color_bar.max = 1
-    else
-      max = active_tiless.collect{|t|t.max_irradiance}.max
-      if max
-        @color_bar.min = 0.8 * max
-        @color_bar.max = max
-      end
+    if active_tiless.length>0
+      @max_irradiance = active_tiless.collect{|t|t.max_irradiance}.max or @max_irradiance
     end
+    if @color_by_relative_value
+      max = 100
+    else
+      max = @max_irradiance
+    end
+    @color_bar.min = 0.8*max
+    @color_bar.max = max
     if not @color_bar == old_color_bar
       update_tile_colors
     end
