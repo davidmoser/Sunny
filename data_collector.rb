@@ -7,7 +7,7 @@ class DataCollector
   # are rendered, i.e. shadow is checked, is set to this variable
   attr_writer :current_point
   
-  def initialize(grid)
+  def initialize(grid, sun_data)
   end
   
   # for performance reasons the sky is split in sections
@@ -38,7 +38,7 @@ class DataCollector
 end
 
 class TotalIrradianceTiles < DataCollector
-  attr_accessor :group, :tiles, :max_irradiance
+  attr_accessor :group, :tiles, :max_irradiance, :total_irradiation
   
   def initialize(grid)
     @group = grid.face.parent.entities.add_group
@@ -53,6 +53,8 @@ class TotalIrradianceTiles < DataCollector
         progress.work
       end
     end
+    @tile_area = grid.tile_area
+    @h_per_state = $solar_integration.sun_data.hours_per_state
     Sketchup.active_model.commit_operation
     
     @coloring_allowed = false
@@ -62,11 +64,11 @@ class TotalIrradianceTiles < DataCollector
   end
   
   def prepare_section(sun_state, irradiance, section)
-    @section_irradiances[section] += irradiance
+    @section_irradiances[section] += irradiance # W/m2
   end
   
   def section_preparation_finished
-    @max_irradiance = @section_irradiances.values.reduce(:+)
+    @max_irradiance = @section_irradiances.values.reduce(:+) * @h_per_state / 1000 # kWh/m2
     $irradiance_statistics.update_color_bar
   end
   
@@ -79,7 +81,7 @@ class TotalIrradianceTiles < DataCollector
   
   def put(sun_state, irradiance)
     return if not irradiance
-    @current_tile.irradiance += irradiance
+    @current_tile.irradiance += irradiance # W/m2
   end
 
   def put_section(section)
@@ -88,14 +90,18 @@ class TotalIrradianceTiles < DataCollector
   
   def wrapup
     tile_wrapup(@current_tile)
+    @total_irradiation = 0
     @tiles.values.each do |s|
       s.face.set_attribute 'solar_integration', 'irradiance', s.irradiance
       s.face.set_attribute 'solar_integration', 'relative_irradiance', s.relative_irradiance
+      @total_irradiation += s.irradiance * @tile_area # kWh
     end
     @coloring_allowed = true
+    $irradiance_statistics.integration_finished
   end
   
   def tile_wrapup(tile)
+    tile.irradiance *= @h_per_state / 1000 # kWh/m2
     tile.relative_irradiance = tile.irradiance * 100 / @max_irradiance
     @color_bar.recolor(tile)
   end
@@ -111,7 +117,7 @@ end
 # singleton to hold all rendered tiles, color them, sum up irradiance
 class IrradianceStatistics < DhtmlDialog
   attr_accessor :tile_groups, :color_by_relative_value, :color_bar,
-    :color_bar_value, :max_irradiance
+    :color_bar_value, :max_irradiance, :total_irradiation
   
   def initialize
     @dialog = UI::WebDialog.new('Nice configuration', true, 'solar_integration_configuration', 400, 400, 150, 150, true)
@@ -149,14 +155,13 @@ class IrradianceStatistics < DhtmlDialog
   
   def update_tile_colors
     update_color_bar
-    for tiles in active_tiless
-      tiles.update_tile_colors
-    end
+    active_tiless.each{|t|t.update_tile_colors}
   end
   
   def color_by_relative_value=(color_by_relative_value)
     if not @color_by_relative_value == color_by_relative_value
       @color_by_relative_value = color_by_relative_value
+      set_color_bar_value(nil, nil)
       update_color_bar
     end
   end
@@ -174,6 +179,11 @@ class IrradianceStatistics < DhtmlDialog
   def active_tiless
     @tiless.reject! {|t| t.group.deleted?}
     return @tiless
+  end
+  
+  def integration_finished
+    @total_irradiation = active_tiless.collect{|t|t.total_irradiation}.reduce(:+)
+    update_dialog
   end
 end
 

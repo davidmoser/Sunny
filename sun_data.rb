@@ -3,7 +3,7 @@ require 'solar_integration/globals.rb'
 
 # information about the sun positions, irradiances etc.
 class SunData
-  attr_reader :states, :wh_per_m2
+  attr_reader :states, :hours_per_state, :tsi
   
   def initialize
     @number_of_states = nil
@@ -20,10 +20,8 @@ class SunData
     @number_of_states = $configuration.sun_states
     @states = Array.new
     
-    minutes_per_year = 365 * 24 * 60 * 60
-    
-    hours_per_state = Float(minutes_per_year) / @number_of_states
-    @wh_per_m2 = hours_per_state * @tsi
+    # divide by 2 because we consider day times only
+    @hours_per_state = Float(365 * 60) / @number_of_states / 2
     
     # initialize states
     # TODO: don't use Sketchup, it's slow (ui feedback)
@@ -31,8 +29,9 @@ class SunData
     si = Sketchup.active_model.shadow_info
     t_old = si['ShadowTime']
 
+    seconds_per_year = 365 * 24 * 60 * 60
     while @states.length < @number_of_states
-      t = Time.at(rand(60*minutes_per_year))
+      t = Time.at(rand(seconds_per_year))
       si['ShadowTime'] = t
       local_vector = si['SunDirection']
       # only interested in day time sun states
@@ -46,12 +45,12 @@ class SunData
 end
 
 class SunState
-  attr_reader :vector, :time, :tsi, :local_vector
+  attr_reader :vector, :duration, :tsi, :local_vector
   def initialize(local_vector, time, tsi)
     @local_vector = local_vector
     @vector = local_vector.transform(SUN_TRANSFORMATION)
     @time = time
-    @tsi = tsi
+    @tsi = tsi #W/m2
   end
 end
 

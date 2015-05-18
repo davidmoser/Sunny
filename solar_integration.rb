@@ -15,6 +15,8 @@ require 'set'
 SKETCHUP_CONSOLE.show
 
 class SolarIntegration
+  attr_reader :sun_data
+  
   include PolygonCollector
   
   def initialize
@@ -117,7 +119,7 @@ class SolarIntegration
     for state in sun_data.states
       vector = state.local_vector
       if vector%Z_AXIS > 0 and vector%normal > 0
-        irradiances[state] = (normal % vector) * sun_data.wh_per_m2
+        irradiances[state] = (normal % vector) * sun_data.tsi
       end
     end
     return irradiances

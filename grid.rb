@@ -8,12 +8,13 @@ class Grid
   include FlatBoundingBox
   
   attr_reader :squares, :number_of_subsquares, :side1, :side2, :face, :normal
-  attr_reader :subdivisions, :subside1, :subside2, :square_length
+  attr_reader :subdivisions, :subside1, :subside2, :square_length, :tile_area
   
   def initialize(face)
     @face = face
     @normal = face.normal
     @tile_length = $configuration.tile_length
+    @tile_area = @tile_length * @tile_length
     
     bounding_box = calculate_flat_bounding_box(face)
     v1 = bounding_box[1] - bounding_box[0]

@@ -28,7 +28,18 @@
                     </div>
                 </div>
             </form>
-            <svg style="width:300px; height:350px;"></svg>
+            <div class="row">
+                <div class="col-sm-6">
+                    Total irradiation:
+                    {{ data.total_irradiation | number:0 }} kWh
+                </div>
+                <div class="col-sm-6">
+                    Value under cursor: 
+                    {{ data.color_bar_value | number:0 }}
+                    {{ data.color_by_relative_value? '%':'kW/m2' }}
+                </div>
+            </div>
+            <svg style="width:500px; height:350px;"></svg>
         </div>
         <script>
 function receiveData(data) {
