@@ -5,13 +5,13 @@ require 'solar_integration/globals.rb'
 class ShadowCaster
   attr_accessor :hash_map, :pyramids
   
-  def initialize(polygons, face, square_length)
+  def initialize(polygons, grid)
     # only consider polygons with points above face plane
-    lowest_face_point = face.vertices.collect{|v|v.position}.min_by{|p|p[2]}
-    @polygons = polygons.select{|p| p.any? {|v| lowest_face_point.vector_to(v)%face.normal>1}}
+    lowest_face_point = grid.face.vertices.collect{|v|v.position}.min_by{|p|p[2]}
+    @polygons = polygons.select{|p| p.any? {|v| lowest_face_point.vector_to(v)%grid.normal>1}}
     @polygons.select!{|p| p.any? {|v| lowest_face_point[2]<v[2]}}
     
-    @pyramids = @polygons.collect{|p| Pyramid.new(p, square_length)}
+    @pyramids = @polygons.collect{|p| Pyramid.new(p, grid.square_length)}
   end
   
   def prepare_center(center)

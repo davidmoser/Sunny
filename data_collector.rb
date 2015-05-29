@@ -149,7 +149,9 @@ class IrradianceStatistics < DhtmlDialog
     @color_bar.min = 0.8*max
     @color_bar.max = max
     if not @color_bar == old_color_bar
+      Sketchup.active_model.start_operation('Repainting tiles', true)
       update_tile_colors
+      Sketchup.active_model.commit_operation
     end
   end
   

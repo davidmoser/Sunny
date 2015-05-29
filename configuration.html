@@ -45,6 +45,18 @@
                         <div class="col-sm-2"> <input class="form-control" type="number" id="input_sky_section_size" ng-model="data.sky_section_size" integer /> </div>
                         <div class="col-sm-4"><div></div></div>
                     </div>
+                    <div class="form-group form-group-sm">
+                        <div class="col-sm-4"> 
+                            <div class="checkbox">
+                            <label>  <input type="checkbox" ng-model="data.assume_faces_up" /> Assume all integration faces are directed upwards
+                                <a href="#" data-toggle="tooltip" title="Assume all integration faces are faced upwards, thereby correcting for wrongly oriented faces. Switch this off if you want to calculate the irradiance for downward oriented faces.">
+                                    help
+                                </a>
+                            </label>
+                            </div>
+                        </div>
+                        <div class="col-sm-8"><div></div></div>
+                    </div>
                 </div>
             </form>
         </div>
