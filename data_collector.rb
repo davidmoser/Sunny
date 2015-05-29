@@ -68,7 +68,7 @@ class TotalIrradianceTiles < DataCollector
   end
   
   def section_preparation_finished
-    @max_irradiance = @section_irradiances.values.reduce(:+) * @h_per_state / 1000 # kWh/m2
+    @max_irradiance = @section_irradiances.values.reduce(0,:+) * @h_per_state / 1000 # kWh/m2
     $irradiance_statistics.update_color_bar
   end
   
