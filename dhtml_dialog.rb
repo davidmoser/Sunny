@@ -2,25 +2,30 @@ require 'json'
 
 class DhtmlDialog
   def initialize
-    initialize_values
-    class_name = self.class.name
+    dialog_title = title(self.class.name)
+    @dialog_name = underscore(self.class.name)
     
-    @dialog = UI::WebDialog.new(title(class_name), true, 'solar_integration_' + underscore(class_name), 400, 400, 150, 150, true)
+    @dialog = UI::WebDialog.new(dialog_title, true, 'solar_integration_' + @dialog_name, 400, 400, 150, 150, true)
+    
+    # initialize dialog values, then restore from file if saved
+    initialize_values
+    if File.exist? initialization_path
+      file = File.open(initialization_path, 'r')
+      deserialize(file.read)
+    end
     
     if not @skip_variables
       @skip_variables = []
     end
-    @skip_variables += ['@dialog', '@skip_variables', '@title']
+    @skip_variables += ['@dialog', '@dialog_name', '@skip_variables', '@title']
     
-    #saved = Sketchup.find_support_file @template_name, INSTALLATION_FOLDER
-    
-    path = Sketchup.find_support_file(underscore(class_name) + '.html', INSTALLATION_FOLDER)
-    @dialog.set_file( path )
+    @dialog.set_file( template_path )
     @dialog.set_full_security
     
     @dialog.add_action_callback('return_data') do |dialog, json|
       puts json
       deserialize(json)
+      save
     end
     
     @dialog.add_action_callback('force_update_dialog') do |dialog|
@@ -44,6 +49,25 @@ class DhtmlDialog
             .select{|v|v.to_s.start_with?('@')}
             .collect { |v| [v[1..-1], instance_variable_get(v)] }]
     return JSON.generate(hash)
+  end
+  
+  def initialization_path
+    directory = File.dirname(template_path)
+    return File.join(directory, @dialog_name + '.json')
+  end
+  
+  def template_path
+    return Sketchup.find_support_file(@dialog_name + '.html', INSTALLATION_FOLDER)
+  end
+  
+  def instance_variable_set(symbol, obj)
+    super(symbol, obj)
+    save
+  end
+  
+  def save
+    data = serialize
+    File.open(initialization_path, 'w') { |f| f.write(data) }
   end
   
   def deserialize(data)

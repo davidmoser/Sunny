@@ -120,7 +120,7 @@ class IrradianceStatistics < DhtmlDialog
     :color_bar_value, :max_irradiance, :total_irradiation
   
   def initialize_values
-    @skip_variables = ['@tiless','@color_bar']
+    @skip_variables = ['@tiless','@color_bar','@color_bar_value']
     @tiless = []
     @color_by_relative_value = true
     @color_bar = ColorBar.new
