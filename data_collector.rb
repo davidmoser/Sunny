@@ -119,11 +119,8 @@ class IrradianceStatistics < DhtmlDialog
   attr_accessor :tile_groups, :color_by_relative_value, :color_bar,
     :color_bar_value, :max_irradiance, :total_irradiation
   
-  def initialize
-    @dialog = UI::WebDialog.new('Nice configuration', true, 'solar_integration_configuration', 400, 400, 150, 150, true)
-    @template_name = 'irradiance_statistics.html'
+  def initialize_values
     @skip_variables = ['@tiless','@color_bar']
-    super()
     @tiless = []
     @color_by_relative_value = true
     @color_bar = ColorBar.new

@@ -6,11 +6,8 @@ class Configuration < DhtmlDialog
     :infer_square_length_from_face, :square_length, :inclination_cutoff, :sky_section_size,
     :active_data_collectors, :advanced_options_on, :assume_faces_up
   
-  def initialize
-    @dialog = UI::WebDialog.new('Nice configuration', true, 'solar_integration_configuration', 400, 400, 150, 150, true)
-    @template_name = 'configuration.html'
+  def initialize_values
     @skip_variables = ['@active_data_collectors']
-    super
     @sun_states = 1000
     @tile_length = 0.3 # m
     @tsi = 250 # W/m^2
