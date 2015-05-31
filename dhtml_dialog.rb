@@ -1,6 +1,6 @@
-require 'json'
+require 'solar_integration/json_serialization.rb'
 
-class DhtmlDialog
+class DhtmlDialog < JsonSerialization
   def initialize
     dialog_title = title(self.class.name)
     @dialog_name = underscore(self.class.name)
@@ -11,20 +11,20 @@ class DhtmlDialog
     initialize_values
     if File.exist? initialization_path
       file = File.open(initialization_path, 'r')
-      deserialize(file.read)
+      update_from_json(file.read)
     end
     
     if not @skip_variables
       @skip_variables = []
     end
-    @skip_variables += ['@dialog', '@dialog_name', '@skip_variables', '@title']
+    @skip_variables += ['@dialog', '@dialog_name', '@title']
     
     @dialog.set_file( template_path )
     @dialog.set_full_security
     
     @dialog.add_action_callback('return_data') do |dialog, json|
       puts json
-      deserialize(json)
+      update_from_json(json)
       save
     end
     
@@ -38,17 +38,8 @@ class DhtmlDialog
   end
   
   def update_dialog
-    script = "receiveData(#{serialize});"
+    script = "receiveData(#{to_json(nil)});"
     @dialog.execute_script(script)
-  end
-  
-  def serialize
-    hash = Hash[
-      instance_variables
-            .select{|v|!@skip_variables.include?(v.to_s)}
-            .select{|v|v.to_s.start_with?('@')}
-            .collect { |v| [v[1..-1], instance_variable_get(v)] }]
-    return JSON.generate(hash)
   end
   
   def initialization_path
@@ -60,21 +51,9 @@ class DhtmlDialog
     return Sketchup.find_support_file(@dialog_name + '.html', INSTALLATION_FOLDER)
   end
   
-  def instance_variable_set(symbol, obj)
-    super(symbol, obj)
-    save
-  end
-  
   def save
-    data = serialize
+    data = to_json(nil)
     File.open(initialization_path, 'w') { |f| f.write(data) }
-  end
-  
-  def deserialize(data)
-      fields = JSON.parse(data, symbolize_names: true)
-      fields.each do |k, v|
-        self.send("#{k}=", v)
-      end
   end
   
   def show

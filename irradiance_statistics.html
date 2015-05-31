@@ -27,6 +27,15 @@
                         </div>
                     </div>
                 </div>
+                <div class="form-group form-group-sm">
+                    <div class="col-sm-12"> 
+                        <div class="checkbox">
+                            <label><input type="checkbox" ng-model="data.color_bar.color_gradient"/>
+                                Use continuous coloring grade
+                            </label> 
+                        </div>
+                    </div>
+                </div>
             </form>
             <div class="row">
                 <div class="col-sm-6">
@@ -51,11 +60,11 @@ function receiveData(data) {
 var app = angular.module('sunnyApp', []);
 app.controller('sunnyCtrl', function($scope) {
     window.location.href = 'skp:force_update_dialog';
-    $scope.$watchCollection('data', function (newData, oldData) {
+    $scope.$watch('data', function (newData, oldData) {
         if(newData !== oldData) {
             window.location.href = 'skp:return_data@' + JSON.stringify(newData);
         }
-    });
+    }, true);
     
     d3.selectAll("svg").append("g").attr("id","colorbar");
     
@@ -67,14 +76,14 @@ app.controller('sunnyCtrl', function($scope) {
             max = $scope.data.max_irradiance;
         }
         
-        $scope.scale = d3.scale.linear()
+        var scale = d3.scale.linear()
             .domain([0.8*max,max])
             .range(["black","red"])
             .clamp(true);
 
-        colorbar = Colorbar()
+        var colorbar = Colorbar()
             .origin([0,0])
-            .scale($scope.scale)
+            .scale(scale)
             .barlength(300)
             .thickness(20)
             .orient('vertical');

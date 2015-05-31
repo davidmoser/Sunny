@@ -69,7 +69,7 @@ class TotalIrradianceTiles < DataCollector
   
   def section_preparation_finished
     @max_irradiance = @section_irradiances.values.reduce(0,:+) * @h_per_state / 1000 # kWh/m2
-    $irradiance_statistics.update_color_bar
+    $irradiance_statistics.update_tile_colors
   end
   
   def current_point=(current_point)
@@ -114,78 +114,6 @@ class TotalIrradianceTiles < DataCollector
   end
 end
 
-# singleton to hold all rendered tiles, color them, sum up irradiance
-class IrradianceStatistics < DhtmlDialog
-  attr_accessor :tile_groups, :color_by_relative_value, :color_bar,
-    :color_bar_value, :max_irradiance, :total_irradiation
-  
-  def initialize_values
-    @skip_variables = ['@tiless','@color_bar','@color_bar_value']
-    @tiless = []
-    @color_by_relative_value = true
-    @color_bar = ColorBar.new
-    @max_irradiance = 10000
-    update_color_bar
-  end
-  
-  def add_tiles(tiles)
-    @tiless.push tiles
-  end
-  
-  def update_color_bar
-    old_color_bar = @color_bar.clone
-    @color_bar.color_by_relative_value = @color_by_relative_value
-    if active_tiless.length>0
-      @max_irradiance = active_tiless.collect{|t|t.max_irradiance}.max or @max_irradiance
-    end
-    if @color_by_relative_value
-      max = 100
-    else
-      max = @max_irradiance
-    end
-    @color_bar.min = 0.8*max
-    @color_bar.max = max
-    if not @color_bar == old_color_bar
-      Sketchup.active_model.start_operation('Repainting tiles', true)
-      update_tile_colors
-      Sketchup.active_model.commit_operation
-    end
-  end
-  
-  def update_tile_colors
-    update_color_bar
-    active_tiless.each{|t|t.update_tile_colors}
-  end
-  
-  def color_by_relative_value=(color_by_relative_value)
-    if not @color_by_relative_value == color_by_relative_value
-      @color_by_relative_value = color_by_relative_value
-      set_color_bar_value(nil, nil)
-      update_color_bar
-    end
-  end
-  
-  def set_color_bar_value(irradiance, relative_irradiance)
-    if @color_by_relative_value
-      @color_bar_value = relative_irradiance
-    else
-      @color_bar_value = irradiance
-    end
-    puts @color_bar_value
-    update_dialog
-  end
-  
-  def active_tiless
-    @tiless.reject! {|t| t.group.deleted?}
-    return @tiless
-  end
-  
-  def integration_finished
-    @total_irradiation = active_tiless.collect{|t|t.total_irradiation}.reduce(:+)
-    update_dialog
-  end
-end
-
 # a square has a @center, @irradiance information and the reference
 # to its visual representation @face
 class Tile
@@ -198,28 +126,6 @@ class Tile
     @face.edges.each{|e|e.hidden=true}
     @irradiance = 0
   end
-end
-
-class ColorBar
-  attr_accessor :min, :max, :color_by_relative_value
-  
-  def recolor(tile)
-    if @color_by_relative_value
-      number = tile.relative_irradiance
-    else
-      number = tile.irradiance
-    end
-    tile.face.material = [(number-@min) / (@max-@min), 0, 0]
-  end
-  
-  def ==(o)
-    o.class == self.class && o.state == state
-  end
-  
-  def state
-    [@min, @max, @color_by_relative_value]
-  end
-
 end
 
 class PolarAngleIrradianceHistogram < DataCollector

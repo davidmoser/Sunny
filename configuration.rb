@@ -14,7 +14,7 @@ class Configuration < DhtmlDialog
     @advanced_options_on = false
     @infer_square_length_from_face = true
     @square_length = 3 # m
-    @inclination_cutoff = 10 # degrees
+    @inclination_cutoff = 30 # degrees
     @sky_section_size = 5 # degrees
     @assume_faces_up = true
     @active_data_collectors = [TotalIrradianceTiles] # not configurable at the moment
