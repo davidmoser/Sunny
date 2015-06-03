@@ -7,7 +7,7 @@ class IrradianceStatistics < DhtmlDialog
   def initialize_values
     @skip_variables = ['@tiless','@color_bar_value']
     @tiless = []
-    @color_bar = ColorBar.new
+    @color_bar = ColorBar.new(self)
     @color_by_relative_value = true
     @max_irradiance = 10000
   end
@@ -19,11 +19,10 @@ class IrradianceStatistics < DhtmlDialog
   def update_tile_colors
     if active_tiless.length>0
       @max_irradiance = active_tiless.collect{|t|t.max_irradiance}.max
-      
+      Sketchup.active_model.start_operation('Repainting tiles', true)
+      active_tiless.each{|t|t.update_tile_colors}
+      Sketchup.active_model.commit_operation
     end
-    Sketchup.active_model.start_operation('Repainting tiles', true)
-    active_tiless.each{|t|t.update_tile_colors}
-    Sketchup.active_model.commit_operation
   end
   
   def color_by_relative_value=(color_by_relative_value)
@@ -57,22 +56,33 @@ end
 
 class ColorBar < JsonSerialization
   
-  def initialize
-    @skip_variables = ['@color1', '@color2', '@color3']
+  def initialize(irradiance_statistics)
     @color_gradient = false
-    @color1 = Sketchup::Color.new(254,232,200)
-    @color2 = Sketchup::Color.new(253,187,132)
-    @color3 = Sketchup::Color.new(227,74,51)
+    @color1 = [254,232,200]
+    @color2 = [253,187,132]
+    @color3 = [227,74,51]
     @color1value = 100
     @color2value = 90
     @color3value = 80
+    # volatile
+    @current_hash = ''
+    @irradiance_statistics = irradiance_statistics
+    @skip_variables = ['@current_hash', '@irradiance_statistics']
+  end
+  
+  def update_from_hash(hash)
+    unless @current_hash==hash
+      @current_hash = hash
+      super(hash)
+      @irradiance_statistics.update_tile_colors
+    end
   end
   
   def recolor(tile)
     if @color_by_relative_value
       value = tile.relative_irradiance
     else
-      value = 100 * tile.irradiance / @max_irradiance
+      value = 100 * tile.irradiance / @irradiance_statistics.max_irradiance
     end
     
     if not @color_gradient
@@ -103,21 +113,13 @@ class ColorBar < JsonSerialization
     case value
     when @color3value..@color2value
       s = (value - @color3value)/(@color2value - @color3value)
-      return @color2.blend(@color3, s)
+      return Sketchup::Color.new(@color2).blend(@color3, s)
     when @color2value..@color1value
       s = (value - @color2value)/(@color1value - @color2value)
-      return @color1.blend(@color2, s)
+      return Sketchup::Color.new(@color1).blend(@color2, s)
     else
       raise 'value is outside allowed range'
     end
-  end
-  
-  def ==(o)
-    o.class == self.class && o.state == state
-  end
-  
-  def state
-    [@color_gradient, @color1value, @color2value, @color3value, @color1, @color2, @color3]
   end
 
 end
