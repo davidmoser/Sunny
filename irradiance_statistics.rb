@@ -58,12 +58,12 @@ class ColorBar < JsonSerialization
   
   def initialize(irradiance_statistics)
     @color_gradient = false
-    @color1 = [254,232,200]
-    @color2 = [253,187,132]
-    @color3 = [227,74,51]
+    @color1 = [255,255,0]
+    @color2 = [255,0,0]
+    @color3 = [0,0,255]
     @color1value = 100
-    @color2value = 90
-    @color3value = 80
+    @color2value = 80
+    @color3value = 60
     # volatile
     @current_hash = ''
     @irradiance_statistics = irradiance_statistics
@@ -74,6 +74,7 @@ class ColorBar < JsonSerialization
     unless @current_hash==hash
       @current_hash = hash
       super(hash)
+      @irradiance_statistics.set_color_bar_value(nil, nil)
       @irradiance_statistics.update_tile_colors
     end
   end
@@ -85,9 +86,7 @@ class ColorBar < JsonSerialization
       value = 100 * tile.irradiance / @irradiance_statistics.max_irradiance
     end
     
-    if not @color_gradient
-      value = step_value(value)
-    end
+    value = step_value(value) if not @color_gradient
     
     if value>@color1value
       value = @color1value
