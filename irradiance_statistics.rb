@@ -79,7 +79,7 @@ class ColorBar < JsonSerialization
   end
   
   def recolor(tile)
-    if @color_by_relative_value
+    if @irradiance_statistics.color_by_relative_value
       value = tile.relative_irradiance
     else
       value = 100 * tile.irradiance / @irradiance_statistics.max_irradiance
