@@ -1,14 +1,13 @@
 
 # singleton to hold all rendered tiles, color them, sum up irradiance
 class IrradianceStatistics < DhtmlDialog
-  attr_accessor :tile_groups, :color_by_relative_value, :color_bar,
-    :color_bar_value, :max_irradiance, :total_irradiation
+  attr_accessor :tile_groups, :scale,
+    :pointer_value, :max_irradiance, :total_irradiation, :tiless
   
   def initialize_values
-    @skip_variables = ['@tiless','@color_bar_value']
+    @skip_variables = ['@tiless']
     @tiless = []
-    @color_bar = ColorBar.new(self)
-    @color_by_relative_value = true
+    @scale = Scale.new(self)
     @max_irradiance = 10000
   end
   
@@ -16,48 +15,38 @@ class IrradianceStatistics < DhtmlDialog
     @tiless.push tiles
   end
   
-  def update_tile_colors
-    if active_tiless.length>0
-      @max_irradiance = active_tiless.collect{|t|t.max_irradiance}.max
-      Sketchup.active_model.start_operation('Repainting tiles', true)
-      active_tiless.each{|t|t.update_tile_colors}
-      Sketchup.active_model.commit_operation
-    end
-  end
-  
-  def color_by_relative_value=(color_by_relative_value)
-    if not @color_by_relative_value == color_by_relative_value
-      @color_by_relative_value = color_by_relative_value
-      set_color_bar_value(nil, nil)
-      update_tile_colors
-    end
-  end
-  
-  def set_color_bar_value(irradiance, relative_irradiance)
-    if @color_by_relative_value
-      @color_bar_value = relative_irradiance
+  def set_pointer_value(irradiance, relative_irradiance)
+    if @scale.color_by_relative_value
+      @pointer_value = relative_irradiance
     else
-      @color_bar_value = irradiance
+      @pointer_value = irradiance
     end
-    puts @color_bar_value
+    puts @pointer_value
     update_dialog
   end
   
-  def active_tiless
+  def tiless
     @tiless.reject! {|t| t.group.deleted?}
     return @tiless
   end
   
+  def max_irradiance
+    @max_irradiance = tiless.collect{|t|t.max_irradiance}.max
+    return @max_irradiance
+  end
+  
   def integration_finished
-    @total_irradiation = active_tiless.collect{|t|t.total_irradiation}.reduce(:+)
+    @total_irradiation = tiless.collect{|t|t.total_irradiation}.reduce(:+)
     update_dialog
   end
 end
 
-class ColorBar < JsonSerialization
+class Scale < JsonSerialization
+  attr_reader :color_by_relative_value
   
   def initialize(irradiance_statistics)
     @color_gradient = false
+    @color_by_relative_value = true
     @color1 = [255,255,0]
     @color2 = [255,0,0]
     @color3 = [0,0,255]
@@ -74,13 +63,13 @@ class ColorBar < JsonSerialization
     unless @current_hash==hash
       @current_hash = hash
       super(hash)
-      @irradiance_statistics.set_color_bar_value(nil, nil)
-      @irradiance_statistics.update_tile_colors
+      @irradiance_statistics.set_pointer_value(nil, nil)
+      update_tile_colors
     end
   end
   
   def recolor(tile)
-    if @irradiance_statistics.color_by_relative_value
+    if @color_by_relative_value
       value = tile.relative_irradiance
     else
       value = 100 * tile.irradiance / @irradiance_statistics.max_irradiance
@@ -118,6 +107,15 @@ class ColorBar < JsonSerialization
       return Sketchup::Color.new(@color1).blend(@color2, s)
     else
       raise 'value is outside allowed range'
+    end
+  end
+  
+  def update_tile_colors
+    tiless = @irradiance_statistics.tiless
+    if tiless.length>0
+      Sketchup.active_model.start_operation('Repainting tiles', true)
+      tiless.each{|t|t.update_tile_colors}
+      Sketchup.active_model.commit_operation
     end
   end
 

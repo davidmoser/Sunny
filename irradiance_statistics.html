@@ -12,16 +12,42 @@
         <script src= "web/d3.min.js"></script>
         <script src= "web/colorbar.js"></script>
         <script src= "web/bootstrap-colorpicker-module.min.js"></script>
+        <script src= "web/ui-bootstrap-tpls-0.13.0.min.js"></script>
         <!-- saved from url=(0014)about:internet -->
     </head>
     <body>
         <div id="sunnyApp" class="container-fluid" ng-app="sunnyApp" ng-controller="sunnyCtrl">
-            <form class="form-horizontal" role="form">
+            <form name="optionsForm" class="form-horizontal" role="form">
+                <div class="row">
+                    <div class="col-sm-6">
+                        Total irradiation:
+                        {{ data.total_irradiation | number:0 }} kWh
+                    </div>
+                    <div class="col-sm-6">
+                        Value under cursor: 
+                        {{ data.pointer_value | number:0 }}
+                        {{ data.scale.color_by_relative_value? '%':'kW/m2' }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        Total irradiation:
+                        {{ data.total_irradiation | number:0 }} kWh
+                    </div>
+                    <div class="col-sm-6">
+                        Value under cursor: 
+                        {{ data.pointer_value | number:0 }}
+                        {{ data.scale.color_by_relative_value? '%':'kW/m2' }}
+                    </div>
+                </div>
+            </form>
+            <svg style="width:200px; height:350px;"></svg>
+            <form name="scaleForm" ng-controller="scaleCtrl" class="form-horizontal" role="form">
                 <div class="form-group form-group-sm">
                     <div class="col-sm-12"> 
                         <div class="checkbox">
-                            <label><input type="checkbox" ng-model="data.color_by_relative_value"/>
-                                Use relative color scale
+                            <label><input type="checkbox" ng-model="data.scale.color_by_relative_value" ng-change="createScale()"/>
+                                Use face-relative coloring
                                 <a href="#" data-toggle="tooltip" title="faces are colored independently, with 100% being the maximum possible irradiance for a face">
                                 help
                                 </a>
@@ -32,58 +58,43 @@
                 <div class="form-group form-group-sm">
                     <div class="col-sm-12"> 
                         <div class="checkbox">
-                            <label><input type="checkbox" ng-model="data.color_bar.color_gradient"/>
+                            <label><input type="checkbox" ng-model="data.scale.color_gradient" ng-change="createScale()"/>
                                 Use continuous coloring grade
                             </label> 
                         </div>
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-sm-6">
-                        Total irradiation:
-                        {{ data.total_irradiation | number:0 }} kWh
+                <div ng-show="scalePropertiesVisible">
+                    <div class="form-group form-group-sm">
+                        <label class="col-xs-2 control-label" for="input_color1"> Color 1: </label>
+                        <div class="col-xs-4"> <input ng-attr-style="background-color: {{ color1 }};" class="form-control" id="input_color1" colorpicker="rgb" ng-model="color1" ng-change="createScale()" type="text"/> </div>
+                        <label class="col-xs-2 control-label" for="input_color1value"> Percentage: </label>
+                        <div class="col-xs-4"> <input class="form-control" type="number" id="input_color1value" ng-model="color1value" ng-change="createScale()" min="0" max="100" float required/>  </div>
                     </div>
-                    <div class="col-sm-6">
-                        Value under cursor: 
-                        {{ data.color_bar_value | number:0 }}
-                        {{ data.color_by_relative_value? '%':'kW/m2' }}
+                    <div class="form-group form-group-sm">
+                        <label class="col-xs-2 control-label" for="input_color2"> Color 2: </label>
+                        <div class="col-xs-4"> <input ng-attr-style="background-color: {{ color2 }};" class="form-control" id="input_color1" colorpicker="rgb" ng-model="color2" ng-change="createScale()" type="text"/> </div>
+                        <label class="col-xs-2 control-label" for="input_color2value"> Percentage: </label>
+                        <div class="col-xs-4"> <input class="form-control" type="number" id="input_color2value" ng-model="color2value" ng-change="createScale()" min="0" max="100" float required/>  </div>
                     </div>
-                </div>
-                <div class="row">
-                    <div class="col-sm-6">
-                        Total irradiation:
-                        {{ data.total_irradiation | number:0 }} kWh
+                    <div class="form-group form-group-sm">
+                        <label class="col-xs-2 control-label" for="input_color3"> Color 3: </label>
+                        <div class="col-xs-4"> <input ng-attr-style="background-color: {{ color3 }};" class="form-control" id="input_color1" colorpicker="rgb" ng-model="color3" ng-change="createScale()" type="text"/> </div>
+                        <label class="col-xs-2 control-label" for="input_color3value"> Percentage: </label>
+                        <div class="col-xs-4"> <input class="form-control" type="number" id="input_color3value" ng-model="color3value" ng-change="createScale()" min="0" max="100" float required/>  </div>
                     </div>
-                    <div class="col-sm-6">
-                        Value under cursor: 
-                        {{ data.color_bar_value | number:0 }}
-                        {{ data.color_by_relative_value? '%':'kW/m2' }}
+                    <div class="form-group form-group-sm">
+                        <div class="col-xs-12"> <button type="button" class="btn btn-default" ng-click="saveScaleChanges()" ng-disabled="!scaleForm.$valid">Save scale</button>
+                                             <button type="button" class="btn btn-default" ng-click="cancelScaleChanges()">Cancel</button> </div>
                     </div>
-                </div>
-                <div class="form-group form-group-sm">
-                    <label class="col-xs-2 control-label" for="input_color1"> Color 1: </label>
-                    <div class="col-xs-2"> <input ng-attr-style="background-color: {{ color1 }};" class="form-control" id="input_color1" colorpicker="rgb" ng-model="color1" type="text"/> </div>
-                    <label class="col-xs-2 control-label" for="input_color1value"> Percentage: </label>
-                    <div class="col-xs-2"> <input class="form-control" type="number" id="input_color1value" ng-model="data.color_bar.color1value" float/>  </div>
-                    <div class="col-xs-4"><div></div></div>
                 </div>
                 <div class="form-group form-group-sm">
-                    <label class="col-xs-2 control-label" for="input_color2"> Color 2: </label>
-                    <div class="col-xs-2"> <input ng-attr-style="background-color: {{ color2 }};" class="form-control" id="input_color1" colorpicker="rgb" ng-model="color2" type="text"/> </div>
-                    <label class="col-xs-2 control-label" for="input_color2value"> Percentage: </label>
-                    <div class="col-xs-2"> <input class="form-control" type="number" id="input_color2value" ng-model="data.color_bar.color2value" float/>  </div>
-                    <div class="col-xs-4"><div></div></div>
-                </div>
-                <div class="form-group form-group-sm">
-                    <label class="col-xs-2 control-label" for="input_color3"> Color 3: </label>
-                    <div class="col-xs-2"> <input ng-attr-style="background-color: {{ color3 }};" class="form-control" id="input_color1" colorpicker="rgb" ng-model="color3" type="text"/> </div>
-                    <label class="col-xs-2 control-label" for="input_color3value"> Percentage: </label>
-                    <div class="col-xs-2"> <input class="form-control" type="number" id="input_color3value" ng-model="data.color_bar.color3value" float/>  </div>
-                    <div class="col-xs-4"><div></div></div>
+                    <div class="col-xs-6"> <button type="button" class="btn btn-default" ng-click="scalePropertiesVisible=true" ng-show="!scalePropertiesVisible">Edit scale</button> </div>
+                    <div class="col-xs-6"></div>
                 </div>
             </form>
-            <svg style="width:500px; height:350px;"></svg>
         </div>
+        
         <script>
 function receiveData(data) {
     $scope = angular.element(document.getElementById('sunnyApp')).scope();
@@ -91,76 +102,71 @@ function receiveData(data) {
     $scope.$apply();
 }
 
-function recreateColorbar($scope) {
-    var max;
-    if($scope.data.color_by_relative_value) {
-        max = 1;
-    } else {
-        max = $scope.data.max_irradiance / 100;
-    }
-    
-    var scale;
-    if($scope.data.color_bar.color_gradient) {
-        scale = d3.scale.linear()
-            .domain([$scope.data.color_bar.color3value*max,$scope.data.color_bar.color2value*max,$scope.data.color_bar.color1value*max])
-            .range([$scope.color3,$scope.color2,$scope.color1])
-            .clamp(true);
-    } else {
-        scale = d3.scale.threshold()
-            .domain([$scope.data.color_bar.color3value*max,$scope.data.color_bar.color2value*max,$scope.data.color_bar.color1value*max])
-            .range([$scope.color3,$scope.color2,$scope.color1,$scope.color1]);
-    }
-
-    var colorbar = Colorbar()
-        .origin([0,0])
-        .scale(scale)
-        .barlength(300)
-        .thickness(20)
-        .orient('vertical');
-
-    $scope.pointer = d3.selectAll("#colorbar").call(colorbar);
-}
-
-var app = angular.module('sunnyApp', ['colorpicker.module']);
+var app = angular.module('sunnyApp', ['colorpicker.module', 'ui.bootstrap']);
 app.controller('sunnyCtrl', function($scope) {
     window.location.href = 'skp:force_update_dialog';
     $scope.$watch('data', function (newData, oldData) {
         if(newData !== oldData) {
-            recreateColorbar($scope);
             window.location.href = 'skp:return_data@' + JSON.stringify(newData);
         }
     }, true);
-    
+});
+
+app.controller('scaleCtrl', function($scope) {
     d3.selectAll("svg").append("g").attr("id","colorbar");
     
-    $scope.$watch('data.color_bar_value', function(colorBarValue, oldData) {
+    $scope.$watch('data.pointer_value', function(colorBarValue, oldData) {
         $scope.pointer.pointTo(colorBarValue);
     });
+    initScaleValues($scope);
     
-    $scope.color1 = arrayToColor($scope.data.color_bar.color1);
-    $scope.color2 = arrayToColor($scope.data.color_bar.color2);
-    $scope.color3 = arrayToColor($scope.data.color_bar.color3);
-    $scope.$watch('color1', function(newColor, oldColor) {
-        $scope.data.color_bar.color1 = colorToArray(newColor);
-    });
-    $scope.$watch('color2', function(newColor, oldColor) {
-        $scope.data.color_bar.color2 = colorToArray(newColor);
-    });
-    $scope.$watch('color3', function(newColor, oldColor) {
-        $scope.data.color_bar.color3 = colorToArray(newColor);
-    });
+    $scope.cancelScaleChanges = function() {
+        initScaleValues($scope);
+        $scope.scalePropertiesVisible = false;
+        $scope.createScale();
+    }
     
-    recreateColorbar($scope);
-}).
-directive('integer', function(){
-    return {
-        require: 'ngModel',
-        link: function(scope, ele, attr, ctrl){
-            ctrl.$parsers.unshift(function(viewValue){
-                return parseInt(viewValue, 10);
-            });
-        }
+    $scope.saveScaleChanges = function() {
+        $scope.data.scale.color1 = colorToArray($scope.color1);
+        $scope.data.scale.color2 = colorToArray($scope.color2);
+        $scope.data.scale.color3 = colorToArray($scope.color3);
+        $scope.data.scale.color1value = $scope.color1value;
+        $scope.data.scale.color2value = $scope.color2value;
+        $scope.data.scale.color3value = $scope.color3value;
+        $scope.scalePropertiesVisible = false;
     };
+    
+    $scope.createScale = function() {
+        var max;
+        if($scope.data.scale.color_by_relative_value) {
+            max = 1;
+        } else {
+            max = $scope.data.max_irradiance / 100;
+        }
+
+        var scale;
+        if($scope.data.scale.color_gradient) {
+            scale = d3.scale.linear()
+                .domain([$scope.color3value*max,$scope.color2value*max,$scope.color1value*max])
+                .range([$scope.color3,$scope.color2,$scope.color1])
+                .clamp(true);
+        } else {
+            scale = d3.scale.threshold()
+                .domain([$scope.color3value*max,$scope.color2value*max,$scope.color1value*max])
+                .range([$scope.color3,$scope.color2,$scope.color1,$scope.color1]);
+        }
+
+        var colorbar = Colorbar()
+            .origin([0,0])
+            .scale(scale)
+            .barlength(300)
+            .thickness(20)
+            .orient('vertical');
+
+        $scope.pointer = d3.selectAll("#colorbar").call(colorbar);
+    };
+    
+    $scope.createScale();
 }).directive('float', function(){
     return {
         require: 'ngModel',
@@ -171,6 +177,15 @@ directive('integer', function(){
         }
     };
 });
+
+function initScaleValues($scope) {
+    $scope.color1 = arrayToColor($scope.data.scale.color1);
+    $scope.color2 = arrayToColor($scope.data.scale.color2);
+    $scope.color3 = arrayToColor($scope.data.scale.color3);
+    $scope.color1value = $scope.data.scale.color1value;
+    $scope.color2value = $scope.data.scale.color2value;
+    $scope.color3value = $scope.data.scale.color3value;
+}
 
 function colorToArray(colorString) {
     return colorString.match(/\d+/g).map(Number);

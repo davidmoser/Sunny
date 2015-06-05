@@ -59,7 +59,7 @@ class TotalIrradianceTiles < DataCollector
     
     @coloring_allowed = false
     @section_irradiances = Hash.new(0)
-    @color_bar = $irradiance_statistics.color_bar
+    @scale = $irradiance_statistics.scale
     $irradiance_statistics.add_tiles(self)
   end
   
@@ -69,7 +69,7 @@ class TotalIrradianceTiles < DataCollector
   
   def section_preparation_finished
     @max_irradiance = @section_irradiances.values.reduce(0,:+) * @h_per_state / 1000 # kWh/m2
-    $irradiance_statistics.update_tile_colors
+    @scale.update_tile_colors
   end
   
   def current_point=(current_point)
@@ -103,13 +103,13 @@ class TotalIrradianceTiles < DataCollector
   def tile_wrapup(tile)
     tile.irradiance *= @h_per_state / 1000 # kWh/m2
     tile.relative_irradiance = tile.irradiance * 100 / @max_irradiance
-    @color_bar.recolor(tile)
+    @scale.recolor(tile)
   end
   
   def update_tile_colors
     return if not @coloring_allowed
     for tile in @tiles.values
-      @color_bar.recolor(tile)
+      @scale.recolor(tile)
     end
   end
 end
