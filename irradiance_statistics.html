@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
         <title>Sunny Statistics</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=0.5">
@@ -12,12 +13,11 @@
         <script src= "web/d3.min.js"></script>
         <script src= "web/colorbar.js"></script>
         <script src= "web/bootstrap-colorpicker-module.min.js"></script>
-        <script src= "web/ui-bootstrap-tpls-0.13.0.min.js"></script>
         <!-- saved from url=(0014)about:internet -->
     </head>
     <body>
         <div id="sunnyApp" class="container-fluid" ng-app="sunnyApp" ng-controller="sunnyCtrl">
-            <form name="optionsForm" class="form-horizontal" role="form">
+            <div>
                 <div class="row">
                     <div class="col-sm-6">
                         Total irradiation:
@@ -29,18 +29,7 @@
                         {{ data.scale.color_by_relative_value? '%':'kW/m2' }}
                     </div>
                 </div>
-                <div class="row">
-                    <div class="col-sm-6">
-                        Total irradiation:
-                        {{ data.total_irradiation | number:0 }} kWh
-                    </div>
-                    <div class="col-sm-6">
-                        Value under cursor: 
-                        {{ data.pointer_value | number:0 }}
-                        {{ data.scale.color_by_relative_value? '%':'kW/m2' }}
-                    </div>
-                </div>
-            </form>
+            </div>
             <svg style="width:200px; height:350px;"></svg>
             <form name="scaleForm" ng-controller="scaleCtrl" class="form-horizontal" role="form">
                 <div class="form-group form-group-sm">
@@ -67,21 +56,27 @@
                 <div ng-show="scalePropertiesVisible">
                     <div class="form-group form-group-sm">
                         <label class="col-xs-2 control-label" for="input_color1"> Color 1: </label>
-                        <div class="col-xs-4"> <input ng-attr-style="background-color: {{ color1 }};" class="form-control" id="input_color1" colorpicker="rgb" ng-model="color1" ng-change="createScale()" type="text"/> </div>
+                        <div class="col-xs-8"> <input ng-attr-style="background-color: {{ color1 }};" class="form-control" id="input_color1" colorpicker="rgb" ng-model="color1" ng-change="createScale()" type="text"/> </div>
+                    </div>
+                    <div class="form-group form-group-sm" ng-class="{'has-error': !scaleForm.color1field.$valid}">
                         <label class="col-xs-2 control-label" for="input_color1value"> Percentage: </label>
-                        <div class="col-xs-4"> <input class="form-control" type="number" id="input_color1value" ng-model="color1value" ng-change="createScale()" min="0" max="100" float required/>  </div>
+                        <div class="col-xs-8"> <input name="color1field" class="form-control" type="number" id="input_color1value" ng-model="color1value" ng-change="createScale()" min="0" max="100" float required/>  </div>
                     </div>
                     <div class="form-group form-group-sm">
                         <label class="col-xs-2 control-label" for="input_color2"> Color 2: </label>
-                        <div class="col-xs-4"> <input ng-attr-style="background-color: {{ color2 }};" class="form-control" id="input_color1" colorpicker="rgb" ng-model="color2" ng-change="createScale()" type="text"/> </div>
+                        <div class="col-xs-8"> <input ng-attr-style="background-color: {{ color2 }};" class="form-control" id="input_color1" colorpicker="rgb" ng-model="color2" ng-change="createScale()" type="text"/> </div>
+                    </div>
+                    <div class="form-group form-group-sm" ng-class="{'has-error': !scaleForm.color2field.$valid}">
                         <label class="col-xs-2 control-label" for="input_color2value"> Percentage: </label>
-                        <div class="col-xs-4"> <input class="form-control" type="number" id="input_color2value" ng-model="color2value" ng-change="createScale()" min="0" max="100" float required/>  </div>
+                        <div class="col-xs-8"> <input name="color2field" class="form-control" type="number" id="input_color2value" ng-model="color2value" ng-change="createScale()" min="0" max="100" float required/>  </div>
                     </div>
                     <div class="form-group form-group-sm">
                         <label class="col-xs-2 control-label" for="input_color3"> Color 3: </label>
-                        <div class="col-xs-4"> <input ng-attr-style="background-color: {{ color3 }};" class="form-control" id="input_color1" colorpicker="rgb" ng-model="color3" ng-change="createScale()" type="text"/> </div>
+                        <div class="col-xs-8"> <input ng-attr-style="background-color: {{ color3 }};" class="form-control" id="input_color1" colorpicker="rgb" ng-model="color3" ng-change="createScale()" type="text"/> </div>
+                    </div>
+                    <div class="form-group form-group-sm" ng-class="{'has-error': !scaleForm.color3field.$valid}">
                         <label class="col-xs-2 control-label" for="input_color3value"> Percentage: </label>
-                        <div class="col-xs-4"> <input class="form-control" type="number" id="input_color3value" ng-model="color3value" ng-change="createScale()" min="0" max="100" float required/>  </div>
+                        <div class="col-xs-8"> <input name="color3field" class="form-control" type="number" id="input_color3value" ng-model="color3value" ng-change="createScale()" min="0" max="100" float required/>  </div>
                     </div>
                     <div class="form-group form-group-sm">
                         <div class="col-xs-12"> <button type="button" class="btn btn-default" ng-click="saveScaleChanges()" ng-disabled="!scaleForm.$valid">Save scale</button>
@@ -96,13 +91,18 @@
         </div>
         
         <script>
+window.onerror = function(errorMsg, url, lineNumber){
+  window.location.href = "skp:puts@" + encodeURIComponent("JavaScript error:\n"+url+" (line "+lineNumber+"): "+errorMsg);
+  return true;
+}
+                        
 function receiveData(data) {
     $scope = angular.element(document.getElementById('sunnyApp')).scope();
     $scope.data = data;
     $scope.$apply();
 }
 
-var app = angular.module('sunnyApp', ['colorpicker.module', 'ui.bootstrap']);
+var app = angular.module('sunnyApp', ['colorpicker.module']);
 app.controller('sunnyCtrl', function($scope) {
     window.location.href = 'skp:force_update_dialog';
     $scope.$watch('data', function (newData, oldData) {

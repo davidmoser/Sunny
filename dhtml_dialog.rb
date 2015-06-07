@@ -20,7 +20,6 @@ class DhtmlDialog < JsonSerialization
     @skip_variables += ['@dialog', '@dialog_name', '@title']
     
     @dialog.set_file( template_path )
-    @dialog.set_full_security
     
     @dialog.add_action_callback('return_data') do |dialog, json|
       puts json
@@ -34,6 +33,10 @@ class DhtmlDialog < JsonSerialization
     
     @dialog.add_action_callback('reset') do |dialog|
       initialize_values
+    end
+    
+    @dialog.add_action_callback('puts') do |dialog, text|
+      puts text
     end
   end
   
