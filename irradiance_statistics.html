@@ -60,7 +60,7 @@
                     </div>
                     <div class="form-group form-group-sm" ng-class="{'has-error': !scaleForm.color1field.$valid}">
                         <label class="col-xs-2 control-label" for="input_color1value"> Percentage: </label>
-                        <div class="col-xs-8"> <input name="color1field" class="form-control" type="number" id="input_color1value" ng-model="color1value" ng-change="createScale()" min="0" max="100" float required/>  </div>
+                        <div class="col-xs-8"> <input name="color1field" class="form-control" type="number" id="input_color1value" ng-model="color1value" ng-change="createScale()" min="{{ (color2value || 1) + 1 }}" max="100" float required/>  </div>
                     </div>
                     <div class="form-group form-group-sm">
                         <label class="col-xs-2 control-label" for="input_color2"> Color 2: </label>
@@ -68,7 +68,7 @@
                     </div>
                     <div class="form-group form-group-sm" ng-class="{'has-error': !scaleForm.color2field.$valid}">
                         <label class="col-xs-2 control-label" for="input_color2value"> Percentage: </label>
-                        <div class="col-xs-8"> <input name="color2field" class="form-control" type="number" id="input_color2value" ng-model="color2value" ng-change="createScale()" min="0" max="100" float required/>  </div>
+                        <div class="col-xs-8"> <input name="color2field" class="form-control" type="number" id="input_color2value" ng-model="color2value" ng-change="createScale()" min="{{ (color3value || 0) + 1 }}" max="{{ (color1value || 100) - 1 }}" float required/>  </div>
                     </div>
                     <div class="form-group form-group-sm">
                         <label class="col-xs-2 control-label" for="input_color3"> Color 3: </label>
@@ -76,7 +76,7 @@
                     </div>
                     <div class="form-group form-group-sm" ng-class="{'has-error': !scaleForm.color3field.$valid}">
                         <label class="col-xs-2 control-label" for="input_color3value"> Percentage: </label>
-                        <div class="col-xs-8"> <input name="color3field" class="form-control" type="number" id="input_color3value" ng-model="color3value" ng-change="createScale()" min="0" max="100" float required/>  </div>
+                        <div class="col-xs-8"> <input name="color3field" class="form-control" type="number" id="input_color3value" ng-model="color3value" ng-change="createScale()" min="0" max="{{ (color2value || 99) - 1 }}" float required/>  </div>
                     </div>
                     <div class="form-group form-group-sm">
                         <div class="col-xs-12"> <button type="button" class="btn btn-default" ng-click="saveScaleChanges()" ng-disabled="!scaleForm.$valid">Save scale</button>
@@ -110,9 +110,7 @@ app.controller('sunnyCtrl', function($scope) {
             window.location.href = 'skp:return_data@' + JSON.stringify(newData);
         }
     }, true);
-});
-
-app.controller('scaleCtrl', function($scope) {
+}).controller('scaleCtrl', function($scope) {
     d3.selectAll("svg").append("g").attr("id","colorbar");
     
     $scope.$watch('data.pointer_value', function(colorBarValue, oldData) {
