@@ -1,11 +1,17 @@
+require 'sketchup.rb'
 require 'solar_integration/spherical_hash_map.rb'
 require 'solar_integration/globals.rb'
+require 'solar_integration/polygon_collector.rb'
 
 # creates a new @hash_map for each position and fills it with pyramids
 class ShadowCaster
   attr_accessor :hash_map, :pyramids
   
-  def initialize(polygons, grid)
+  include PolygonCollector
+  
+  def initialize(grid)
+    polygons = collect_model_polygons(Sketchup.active_model)
+    
     # only consider polygons with points above face plane
     lowest_face_point = grid.face.vertices.collect{|v|v.position}.min_by{|p|p[2]}
     @polygons = polygons.select{|p| p.any? {|v| lowest_face_point.vector_to(v)%grid.normal>1}}

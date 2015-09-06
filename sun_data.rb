@@ -3,29 +3,28 @@ require 'solar_integration/globals.rb'
 
 # information about the sun positions, irradiances etc.
 class SunData
-  attr_reader :states, :hours_per_state, :tsi
+  attr_reader :states, :contribution_per_state
   
   def initialize
     @number_of_states = nil
-    @tsi = nil
+    @ghi_factor = nil
   end
   
   # randomly selects sun states, choosing e.g. a state every full hour for each
   # day is very bad sampling (small differences between days, large differences
   # between hours).
   def update
-    return if @tsi==$configuration.tsi and @number_of_states==$configuration.sun_states
+    return if @number_of_states==$configuration.sun_states
     
-    @tsi = $configuration.tsi
     @number_of_states = $configuration.sun_states
     @states = Array.new
     
+    # how much one state contributes to the yearly average
     # divide by 2 because we consider day times only
-    @hours_per_state = Float(365 * 60) / @number_of_states / 2
+    @contribution_per_state = Float(1) / @number_of_states / 2
     
     # initialize states
     # TODO: don't use Sketchup, it's slow (ui feedback)
-    # TODO: determine local tsi (atmospheric thickness, cloud cover, etc.)
     si = Sketchup.active_model.shadow_info
     t_old = si['ShadowTime']
 
@@ -36,7 +35,7 @@ class SunData
       local_vector = si['SunDirection']
       # only interested in day time sun states
       if local_vector[2]>0
-        @states.push SunState.new(local_vector,t, 1)
+        @states.push SunState.new(local_vector,t)
       end
     end
       
@@ -45,12 +44,11 @@ class SunData
 end
 
 class SunState
-  attr_reader :vector, :duration, :tsi, :local_vector
-  def initialize(local_vector, time, tsi)
+  attr_reader :vector, :duration, :local_vector
+  def initialize(local_vector, time)
     @local_vector = local_vector
     @vector = local_vector.transform(SUN_TRANSFORMATION)
     @time = time
-    @tsi = tsi #W/m2
   end
 end
 
