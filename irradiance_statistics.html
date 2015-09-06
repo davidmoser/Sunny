@@ -150,8 +150,8 @@ app.controller('sunnyCtrl', function($scope) {
                 .clamp(true);
         } else {
             scale = d3.scale.threshold()
-                .domain([$scope.color3value*max,$scope.color2value*max,$scope.color1value*max])
-                .range([$scope.color3,$scope.color2,$scope.color1,$scope.color1]);
+                .domain([0,$scope.color3value*max,$scope.color2value*max,100*max])
+                .range([$scope.color3,$scope.color3,$scope.color2,$scope.color1,$scope.color1]);
         }
 
         var colorbar = Colorbar()
