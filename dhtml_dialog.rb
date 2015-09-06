@@ -7,12 +7,9 @@ class DhtmlDialog < JsonSerialization
     
     @dialog = UI::WebDialog.new(dialog_title, true, 'solar_integration_' + @dialog_name, 400, 400, 150, 150, true)
     
-    # initialize dialog values, then restore from file if saved
-    initialize_values
-    if File.exist? initialization_path
-      file = File.open(initialization_path, 'r')
-      update_from_json(file.read)
-    end
+    initialize_values # Plugin default
+    update_from_file # Saved Sketchup-wide default
+    update_from_model # Model settings
     
     if not @skip_variables
       @skip_variables = []
@@ -24,7 +21,7 @@ class DhtmlDialog < JsonSerialization
     @dialog.add_action_callback('return_data') do |dialog, json|
       puts json
       update_from_json(json)
-      save
+      save_to_model
     end
     
     @dialog.add_action_callback('force_update_dialog') do |dialog|
@@ -38,6 +35,10 @@ class DhtmlDialog < JsonSerialization
     @dialog.add_action_callback('puts') do |dialog, text|
       puts text
     end
+    
+    @dialog.add_action_callback('set_default') do |dialog|
+      save_to_file
+    end
   end
   
   def update_dialog
@@ -45,7 +46,7 @@ class DhtmlDialog < JsonSerialization
     @dialog.execute_script(script)
   end
   
-  def initialization_path
+  def default_file_path
     directory = File.dirname(template_path)
     return File.join(directory, @dialog_name + '.json')
   end
@@ -54,9 +55,28 @@ class DhtmlDialog < JsonSerialization
     return Sketchup.find_support_file(@dialog_name + '.html', INSTALLATION_FOLDER)
   end
   
-  def save
+  def save_to_model
     data = to_json(nil)
-    File.open(initialization_path, 'w') { |f| f.write(data) }
+    Sketchup.active_model.set_attribute('solar_integration', @dialog_name, data)
+  end
+  
+  def update_from_model
+    data = Sketchup.active_model.get_attribute('solar_integration', @dialog_name)
+    if data
+      update_from_json(data)
+    end
+  end
+  
+  def save_to_file
+    data = to_json(nil)
+    File.open(default_file_path, 'w') { |f| f.write(data) }
+  end
+  
+  def update_from_file
+    if File.exist? default_file_path
+      file = File.open(default_file_path, 'r')
+      update_from_json(file.read)
+    end
   end
   
   def show
