@@ -1,5 +1,5 @@
 require 'solar_integration/dhtml_dialog.rb'
-require 'solar_integration/data_collector.rb'
+require 'solar_integration/total_irradiance_tiles.rb'
 
 class Configuration < DhtmlDialog
   attr_accessor :sun_states,

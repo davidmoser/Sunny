@@ -3,11 +3,10 @@ require 'solar_integration/grid.rb'
 require 'solar_integration/spherical_hash_map.rb'
 require 'solar_integration/shadow_caster.rb'
 require 'solar_integration/sun_data.rb'
-require 'solar_integration/data_collector.rb'
 require 'solar_integration/irradiance_statistics.rb'
 require 'solar_integration/sky_sections.rb'
 
-class Rendering
+class IrradianceRendering
   def initialize(face, sun_data)
     @grid = Grid.new(face)
     @data_collectors = $configuration.active_data_collectors.collect { |c| c.new(@grid) }

@@ -6,7 +6,7 @@ require 'solar_integration/shadow_caster.rb'
 require 'solar_integration/sun_data.rb'
 require 'solar_integration/irradiance_statistics.rb'
 require 'solar_integration/menu.rb'
-require 'solar_integration/rendering.rb'
+require 'solar_integration/irradiance_rendering.rb'
 require 'set'
 
 SKETCHUP_CONSOLE.show
@@ -63,7 +63,7 @@ class SolarIntegration
   
   def integrate(face)
     @sun_data.update
-    rendering = Rendering.new(face, @sun_data)
+    rendering = IrradianceRendering.new(face, @sun_data)
     rendering.render()
   end
 end
