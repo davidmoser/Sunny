@@ -3,25 +3,27 @@ require 'solar_integration/globals.rb'
 
 # information about the sun positions, irradiances etc.
 class SunData
-  attr_reader :states, :contribution_per_state
+  attr_reader :states, :contribution_per_state, :ghi_factor
   
   def initialize
     @number_of_states = nil
-    @ghi_factor = nil
+    @contribution_per_state = nil
   end
   
   # randomly selects sun states, choosing e.g. a state every full hour for each
   # day is very bad sampling (small differences between days, large differences
   # between hours).
   def update
-    return if @number_of_states==$configuration.sun_states
+    if not @number_of_states==$configuration.sun_states
+      load_sun_states
+    end
     
+    calculate_contribution_per_state
+  end
+  
+  def load_sun_states
     @number_of_states = $configuration.sun_states
     @states = Array.new
-    
-    # how much one state contributes to the yearly average
-    # divide by 2 because we consider day times only
-    @contribution_per_state = Float(1) / @number_of_states / 2
     
     # initialize states
     # TODO: don't use Sketchup, it's slow (ui feedback)
@@ -40,6 +42,21 @@ class SunData
     end
       
     si['ShadowTime'] = t_old # restore initial time
+  end
+  
+  def calculate_contribution_per_state
+    total_z_component = 0
+    for state in @states
+      vector = state.local_vector
+      z_component = vector%Z_AXIS
+      if z_component > 0
+        total_z_component += z_component
+      end
+    end
+    
+    # how much one state contributes to the yearly average
+    # divide by 2 because we consider day times only
+    @contribution_per_state = $configuration.global_horizontal_irradiation / total_z_component
   end
 end
 

@@ -22,6 +22,7 @@ class TotalIrradianceTiles < DataCollector
     end
     @tile_area = grid.tile_area
     @contribution_per_state = $solar_integration.sun_data.contribution_per_state
+    @ghi_factor = $solar_integration.sun_data.ghi_factor
     Sketchup.active_model.commit_operation
     
     @coloring_allowed = false
@@ -68,7 +69,7 @@ class TotalIrradianceTiles < DataCollector
   end
   
   def tile_wrapup(tile)
-    tile.irradiance *= @contribution_per_state # W/m2
+    tile.irradiance *= @contribution_per_state # kWh/m2
     tile.relative_irradiance = tile.irradiance * 100 / @max_irradiance
     @scale.recolor(tile)
   end
