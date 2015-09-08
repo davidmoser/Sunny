@@ -19,15 +19,39 @@
         <div id="sunnyApp" class="container-fluid" ng-app="sunnyApp" ng-controller="sunnyCtrl">
             <div>
                 <div class="row">
-                    <div class="col-sm-6">
+                    <div class="col-sm-4">
                         Total irradiation:
                         {{ data.total_irradiation | number:0 }} kWh
                     </div>
-                    <div class="col-sm-6">
+                    <div class="col-sm-4">
+                        Total area:
+                        {{ data.area | number:2 }} m2
+                    </div>
+                    <div class="col-sm-4">
                         Value under cursor: 
                         {{ data.pointer_value | number:0 }}
                         {{ data.scale.color_by_relative_value? '%':'kW/m2' }}
                     </div>
+                </div>
+            </div>
+            <div>
+                <div class="row">
+                    <div class="col-sm-4">
+                        Electricity production:
+                        {{ data.total_kwh | number:0 }} kWh
+                    </div>
+                    <div class="col-sm-4">
+                        Peak wattage:
+                        {{ data.kwp | number:2 }} kWp
+                    </div>
+                    <div class="col-sm-4">
+                        Specific yield:
+                        {{ data.kwh_per_kwp | number:0 }} kWh/kWp
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="row">
                 </div>
             </div>
             <svg style="width:200px; height:350px;"></svg>

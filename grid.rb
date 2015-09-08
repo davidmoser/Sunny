@@ -8,7 +8,7 @@ class Grid
   include FlatBoundingBox
   
   attr_reader :squares, :number_of_subsquares, :side1, :side2, :face, :normal
-  attr_reader :subdivisions, :subside1, :subside2, :square_length, :tile_area
+  attr_reader :subdivisions, :subside1, :subside2, :square_length, :tile_area, :total_area
   
   def initialize(face)
     @face = face
@@ -53,6 +53,8 @@ class Grid
         end
       end
     end
+    
+    @total_area = @number_of_subsquares * @tile_area
   end  
 end
 

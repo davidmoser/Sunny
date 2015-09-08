@@ -1,5 +1,5 @@
 require 'solar_integration/dhtml_dialog.rb'
-require 'solar_integration/total_irradiance_tiles.rb'
+require 'solar_integration/irradiance_tiles.rb'
 
 class Configuration < DhtmlDialog
   attr_accessor :sun_states,
@@ -28,7 +28,7 @@ class Configuration < DhtmlDialog
     @global_horizontal_irradiation = 1200 # kWh / m2, central europe
     @cell_efficiency = 20 # %
     @system_losses = 11 # 8% temperature, 3% reflection
-    @active_data_collectors = [TotalIrradianceTiles] # not configurable at the moment
+    @active_data_collectors = [IrradianceTiles] # not configurable at the moment
   end
   
 end

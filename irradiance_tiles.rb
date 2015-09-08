@@ -4,10 +4,11 @@ require 'solar_integration/dhtml_dialog.rb'
 require 'solar_integration/tile.rb'
 require 'solar_integration/data_collector.rb'
 
-class TotalIrradianceTiles < DataCollector
-  attr_accessor :group, :tiles, :max_irradiance, :total_irradiation
+class IrradianceTiles < DataCollector
+  attr_accessor :group, :tiles, :max_irradiance, :total_irradiation, :grid
   
   def initialize(grid)
+    @grid = grid
     @group = grid.face.parent.entities.add_group
     @group.name = 'Irradiance Tiles'
     
@@ -20,7 +21,7 @@ class TotalIrradianceTiles < DataCollector
         progress.work
       end
     end
-    @tile_area = grid.tile_area
+    
     @contribution_per_state = $solar_integration.sun_data.contribution_per_state
     @ghi_factor = $solar_integration.sun_data.ghi_factor
     Sketchup.active_model.commit_operation
@@ -62,7 +63,7 @@ class TotalIrradianceTiles < DataCollector
     @tiles.values.each do |s|
       s.face.set_attribute 'solar_integration', 'irradiance', s.irradiance
       s.face.set_attribute 'solar_integration', 'relative_irradiance', s.relative_irradiance
-      @total_irradiation += s.irradiance * @tile_area # kWh
+      @total_irradiation += s.irradiance * @grid.tile_area # kWh
     end
     @coloring_allowed = true
     $irradiance_statistics.integration_finished
