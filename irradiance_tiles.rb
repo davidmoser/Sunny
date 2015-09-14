@@ -11,6 +11,7 @@ class IrradianceTiles < DataCollector
     @grid = grid
     @group = grid.face.parent.entities.add_group
     @group.name = 'Irradiance Tiles'
+    @group.set_attribute 'solar_integration', 'version', 1
     
     progress = Progress.new(grid.number_of_subsquares, 'Creating tiles...')
     Sketchup.active_model.start_operation('Creating tiles', true)
@@ -46,35 +47,31 @@ class IrradianceTiles < DataCollector
       tile_wrapup(@current_tile)
     end
     @current_tile = @tiles[current_point]
+    @current_irradiance = 0
   end
   
   def put(sun_state, irradiance)
     return if not irradiance
-    @current_tile.irradiance += irradiance # W/m2
+    @current_irradiance += irradiance # W/m2
   end
 
   def put_section(section)
-    @current_tile.irradiance += @section_irradiances[section]
-  end
-  
-  def wrapup
-    tile_wrapup(@current_tile)
-    @total_irradiation = 0
-    @tiles.values.each do |s|
-      s.face.set_attribute 'solar_integration', 'irradiance', s.irradiance
-      s.face.set_attribute 'solar_integration', 'relative_irradiance', s.relative_irradiance
-      @total_irradiation += s.irradiance * @grid.tile_area # kWh
-    end
-    @coloring_allowed = true
-    $irradiance_statistics.integration_finished
+    @current_irradiance += @section_irradiances[section]
   end
   
   def tile_wrapup(tile)
-    tile.irradiance *= @contribution_per_state # kWh/m2
+    tile.irradiance = @current_irradiance * @contribution_per_state # kWh/m2
     tile.relative_irradiance = tile.irradiance * 100 / @max_irradiance
     @scale.recolor(tile)
   end
   
+  def wrapup
+    tile_wrapup(@current_tile)
+    @total_irradiation = @tiles.values.collect{|s|s.irradiance}.reduce(:+) * @grid.tile_area
+    @coloring_allowed = true
+    $irradiance_statistics.integration_finished
+  end
+ 
   def update_tile_colors
     return if not @coloring_allowed
     for tile in @tiles.values
