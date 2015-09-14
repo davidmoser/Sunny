@@ -18,6 +18,7 @@ module PolygonCollector
     return [] if entity.hidden?
     case entity
     when Sketchup::Group
+      return [] if entity.attribute_dictionary('solar_integration')
       return collect_from_entities(entity.entities, entity.transformation)
     when Sketchup::ComponentInstance
       return collect_from_entities(entity.definition.entities, entity.transformation)

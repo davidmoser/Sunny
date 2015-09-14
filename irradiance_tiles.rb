@@ -11,7 +11,7 @@ class IrradianceTiles < DataCollector
     @grid = grid
     @group = grid.face.parent.entities.add_group
     @group.name = 'Irradiance Tiles'
-    @group.set_attribute 'solar_integration', 'version', 1
+    @group.set_attribute 'solar_integration', 'exists', true # marking the group
     
     progress = Progress.new(grid.number_of_subsquares, 'Creating tiles...')
     Sketchup.active_model.start_operation('Creating tiles', true)
