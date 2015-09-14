@@ -55,7 +55,6 @@ class IrradianceStatistics < DhtmlDialog
       @kwh_per_kwp = @total_kwh / @kwp
     end
     
-    
     update_dialog
   end
 end

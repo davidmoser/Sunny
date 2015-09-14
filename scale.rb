@@ -2,6 +2,21 @@
 class Scale < JsonSerialization
   attr_reader :color_by_relative_value
   
+  class ColorCache
+    def initialize(color1, color2)
+      @cache = Hash.new
+      @color1 = color1
+      @color2 = color2
+    end
+    def get(s)
+      s = s.round(2)
+      if not @cache.has_key? s 
+        @cache[s] = Sketchup::Color.new(@color1).blend(@color2, s)
+      end
+      return @cache[s]
+    end
+  end
+  
   def initialize(irradiance_statistics)
     @color_gradient = false
     @color_by_relative_value = true
@@ -59,16 +74,18 @@ class Scale < JsonSerialization
     case value
     when @color3value..@color2value
       s = (value - @color3value)/(@color2value - @color3value)
-      return Sketchup::Color.new(@color2).blend(@color3, s)
+      return @cache1.get(s)
     when @color2value..@color1value
       s = (value - @color2value)/(@color1value - @color2value)
-      return Sketchup::Color.new(@color1).blend(@color2, s)
+      return @cache2.get(s)
     else
       raise 'value is outside allowed range'
     end
   end
   
   def update_tile_colors
+    @cache1 = ColorCache.new(@color2, @color3)
+    @cache2 = ColorCache.new(@color1, @color2)
     tiless = @irradiance_statistics.tiless
     if tiless.length>0
       Sketchup.active_model.start_operation('Repainting tiles', true)
