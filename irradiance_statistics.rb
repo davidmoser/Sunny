@@ -37,15 +37,24 @@ class IrradianceStatistics < DhtmlDialog
     return @max_irradiance
   end
   
-  def integration_finished
+  def update_values
     efficiency = Float($configuration.cell_efficiency) / 100
     losses = Float(100 - $configuration.system_losses) / 100
     
-    @total_irradiation = tiless.collect{|t|t.total_irradiation}.reduce(:+)
-    @total_kwh = @total_irradiation * efficiency * losses
-    @area = tiless.collect{|t|t.grid.total_area}.reduce(:+)
-    @kwp = @area * efficiency
-    @kwh_per_kwp = @total_kwh / @kwp
+    if tiless.empty?
+      @total_irradiation = 0
+      @total_kwh = 0
+      @area = 0
+      @kwp = 0
+      @kwh_per_kwp = 0
+    else
+      @total_irradiation = tiless.collect{|t|t.total_irradiation}.reduce(:+)
+      @total_kwh = @total_irradiation * efficiency * losses
+      @area = tiless.collect{|t|t.grid.total_area}.reduce(:+)
+      @kwp = @area * efficiency
+      @kwh_per_kwp = @total_kwh / @kwp
+    end
+    
     
     update_dialog
   end

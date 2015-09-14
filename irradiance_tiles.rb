@@ -1,3 +1,4 @@
+require 'sketchup.rb'
 require 'solar_integration/progress.rb'
 require 'solar_integration/globals.rb'
 require 'solar_integration/dhtml_dialog.rb'
@@ -6,12 +7,19 @@ require 'solar_integration/data_collector.rb'
 
 class IrradianceTiles < DataCollector
   attr_accessor :group, :tiles, :max_irradiance, :total_irradiation, :grid
+
+  class TilesObserver < Sketchup::EntityObserver
+    def onEraseEntity(entity)
+      $irradiance_statistics.update_values
+    end
+  end
   
   def initialize(grid)
     @grid = grid
     @group = grid.face.parent.entities.add_group
     @group.name = 'Irradiance Tiles'
     @group.set_attribute 'solar_integration', 'exists', true # marking the group
+    @group.add_observer(TilesObserver.new)
     
     progress = Progress.new(grid.number_of_subsquares, 'Creating tiles...')
     Sketchup.active_model.start_operation('Creating tiles', true)
@@ -69,7 +77,7 @@ class IrradianceTiles < DataCollector
     tile_wrapup(@current_tile)
     @total_irradiation = @tiles.values.collect{|s|s.irradiance}.reduce(:+) * @grid.tile_area
     @coloring_allowed = true
-    $irradiance_statistics.integration_finished
+    $irradiance_statistics.update_values
   end
  
   def update_tile_colors
