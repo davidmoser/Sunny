@@ -1,3 +1,4 @@
+require 'solar_integration/progress.rb'
 
 class Scale < JsonSerialization
   attr_reader :color_by_relative_value
@@ -34,18 +35,28 @@ class Scale < JsonSerialization
   
   def update_from_hash(hash)
     unless @current_hash==hash
+      initializing = @current_hash==''
       @current_hash = hash
       super(hash)
       @irradiance_statistics.set_pointer_value(nil, nil)
-      update_tile_colors
+      if not initializing
+        update_tile_colors
+      else
+        init_caches
+      end
     end
   end
   
-  def recolor(tile)
+  def init_caches
+    @cache1 = ColorCache.new(@color2, @color3)
+    @cache2 = ColorCache.new(@color1, @color2)
+  end
+  
+  def recolor(face)
     if @color_by_relative_value
-      value = tile.relative_irradiance
+      value = face_property(face,'relative_irradiance')
     else
-      value = 100 * tile.irradiance / @irradiance_statistics.max_irradiance
+      value = 100 * face_property(face,'irradiance') / @irradiance_statistics.max_irradiance
     end
     
     value = step_value(value) if not @color_gradient
@@ -56,7 +67,7 @@ class Scale < JsonSerialization
       value = @color3value
     end
     
-    tile.face.material = calculate_color(value)
+    face.material = calculate_color(value)
   end
   
   def step_value(value)
@@ -84,14 +95,20 @@ class Scale < JsonSerialization
   end
   
   def update_tile_colors
-    @cache1 = ColorCache.new(@color2, @color3)
-    @cache2 = ColorCache.new(@color1, @color2)
-    tiless = @irradiance_statistics.tiless
-    if tiless.length>0
+    init_caches
+    faces = @irradiance_statistics.tile_groups.collect{|g| g.entities.select{|e|e.is_a? Sketchup::Face}}.reduce(:+)
+    if faces
+      progress = Progress.new(faces.length, 'Repainting tiles...')
       Sketchup.active_model.start_operation('Repainting tiles', true)
-      tiless.each{|t|t.update_tile_colors}
+      faces.each do |face|
+        recolor(face)
+        progress.work
+      end
       Sketchup.active_model.commit_operation
     end
   end
 
+  def face_property(face, name)
+    return face.get_attribute('solar_integration', name)
+  end
 end

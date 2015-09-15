@@ -6,7 +6,6 @@ require 'solar_integration/tile.rb'
 require 'solar_integration/data_collector.rb'
 
 class IrradianceTiles < DataCollector
-  attr_accessor :group, :tiles, :max_irradiance, :total_irradiation, :grid
 
   class TilesObserver < Sketchup::EntityObserver
     def onEraseEntity(entity)
@@ -21,7 +20,7 @@ class IrradianceTiles < DataCollector
     @grid = grid
     @group = grid.face.parent.entities.add_group
     @group.name = 'Irradiance Tiles'
-    @group.set_attribute 'solar_integration', 'exists', true # marking the group
+    save_to_model('total_area', grid.total_area)
     @group.add_observer(TilesObserver.new)
     
     progress = Progress.new(grid.number_of_subsquares, 'Creating tiles...')
@@ -41,7 +40,7 @@ class IrradianceTiles < DataCollector
     @coloring_allowed = false
     @section_irradiances = Hash.new(0)
     @scale = $irradiance_statistics.scale
-    $irradiance_statistics.add_tiles(self)
+    $irradiance_statistics.add_tile_group(@group)
   end
   
   def prepare_section(sun_state, irradiance, section)
@@ -50,7 +49,7 @@ class IrradianceTiles < DataCollector
   
   def section_preparation_finished
     @max_irradiance = @section_irradiances.values.reduce(0,:+) * @contribution_per_state # W/m2
-    @scale.update_tile_colors
+    save_to_model('max_irradiance', @max_irradiance)
   end
   
   def current_point=(current_point)
@@ -73,20 +72,18 @@ class IrradianceTiles < DataCollector
   def tile_wrapup(tile)
     tile.irradiance = @current_irradiance * @contribution_per_state # kWh/m2
     tile.relative_irradiance = tile.irradiance * 100 / @max_irradiance
-    @scale.recolor(tile)
+    @scale.recolor(tile.face)
   end
   
   def wrapup
     tile_wrapup(@current_tile)
-    @total_irradiation = @tiles.values.collect{|s|s.irradiance}.reduce(:+) * @grid.tile_area
+    total_irradiation = @tiles.values.collect{|s|s.irradiance}.reduce(:+) * @grid.tile_area
+    save_to_model('total_irradiation', total_irradiation)
     @coloring_allowed = true
     $irradiance_statistics.update_values
   end
- 
-  def update_tile_colors
-    return if not @coloring_allowed
-    for tile in @tiles.values
-      @scale.recolor(tile)
-    end
+  
+  def save_to_model(name, value)
+    @group.set_attribute 'solar_integration', name, value
   end
 end

@@ -1,3 +1,4 @@
+require 'sketchup.rb'
 require 'solar_integration/progress.rb'
 require 'solar_integration/grid.rb'
 require 'solar_integration/spherical_hash_map.rb'

@@ -13,11 +13,15 @@ class Tile
   
   def irradiance= irradiance
     @irradiance = irradiance
-    @face.set_attribute 'solar_integration', 'irradiance', irradiance
+    save_to_model('irradiance', irradiance)
   end
   
   def relative_irradiance= relative_irradiance
     @relative_irradiance = relative_irradiance
-    @face.set_attribute 'solar_integration', 'relative_irradiance', relative_irradiance
+    save_to_model('relative_irradiance', relative_irradiance)
+  end
+  
+  def save_to_model(name, value)
+    @face.set_attribute 'solar_integration', name, value
   end
 end
