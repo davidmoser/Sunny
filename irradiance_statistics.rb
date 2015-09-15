@@ -2,7 +2,7 @@ require 'solar_integration/scale.rb'
 
 # singleton to hold all rendered tiles, color them, sum up irradiance
 class IrradianceStatistics < DhtmlDialog
-  attr_accessor :tile_groups, :scale,
+  attr_accessor :scale,
     :pointer_value, :max_irradiance, :tiless,
     :total_irradiation, :total_kwh, :kwp, :kwh_per_kwp
   
@@ -29,7 +29,7 @@ class IrradianceStatistics < DhtmlDialog
   
   def tiless
     @tiless.reject! {|t| t.group.deleted?}
-    return @tiless
+    return @tiless.reject {|t| t.group.hidden? }
   end
   
   def max_irradiance

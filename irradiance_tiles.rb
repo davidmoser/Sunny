@@ -12,6 +12,9 @@ class IrradianceTiles < DataCollector
     def onEraseEntity(entity)
       $irradiance_statistics.update_values
     end
+    def onElementModified(entities, entity)
+      $irradiance_statistics.update_values
+    end
   end
   
   def initialize(grid)
