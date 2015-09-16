@@ -13,11 +13,11 @@ class Menu
     end
 
     add_menu('Configuration ...') do
-      $configuration.show
+      $solar_integration.configuration.show
     end
     
     add_menu('Statistics ...') do
-      $irradiance_statistics.show
+      $solar_integration.statistics.show
     end
     
     @menu.add_separator

@@ -8,9 +8,10 @@ class SphericalHashMap
   def initialize
     @map = Hash.new{|m,k| m[k]=[]} # empty list is the default
     @azimuth_class = Class.new(AzimuthHashInterval)
-    @azimuth_class.angular_resolution = $configuration.sky_section_size
+    sky_section_size = $solar_integration.configuration.sky_section_size
+    @azimuth_class.angular_resolution = sky_section_size
     @polar_class = Class.new(PolarHashInterval)
-    @polar_class.angular_resolution = $configuration.sky_section_size
+    @polar_class.angular_resolution = sky_section_size
   end
   
   def add_value(polygon, value)
@@ -231,7 +232,7 @@ end
 class HashMapVisualizationSphere
   
   def initialize(entities, center, map, sun_transformation)
-    az_resolution = pl_resolution = $configuration.sky_section_size
+    az_resolution = pl_resolution = $solar_integration.configuration.sky_section_size
     @group = entities.add_group
     progress = Progress.new(360/az_resolution * 180/pl_resolution, 'Creating hash sphere...')
     @radius = 30

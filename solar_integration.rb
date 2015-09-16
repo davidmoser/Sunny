@@ -1,24 +1,26 @@
+require 'sketchup.rb'
 require 'solar_integration/globals.rb'
 require 'solar_integration/progress.rb'
 require 'solar_integration/grid.rb'
 require 'solar_integration/spherical_hash_map.rb'
 require 'solar_integration/shadow_caster.rb'
-require 'solar_integration/sun_data.rb'
-require 'solar_integration/irradiance_statistics.rb'
 require 'solar_integration/menu.rb'
 require 'solar_integration/irradiance_rendering.rb'
+require 'solar_integration/solar_integration_app_observer.rb'
 require 'set'
 
 SKETCHUP_CONSOLE.show
 
 class SolarIntegration
-  attr_reader :sun_data
+  attr_accessor :configuration, :statistics, :sun_data
   
   def initialize
-    $configuration = Configuration.new
-    $irradiance_statistics = IrradianceStatistics.new
-    
+    @configuration = Configuration.new
+    @statistics = IrradianceStatistics.new
     @sun_data = SunData.new
+    
+    Sketchup.add_observer(SolarIntegrationAppObserver.new(self))
+    
     Menu.new(self)
   end
 

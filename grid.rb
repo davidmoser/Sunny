@@ -11,23 +11,24 @@ class Grid
   attr_reader :subdivisions, :subside1, :subside2, :square_length, :tile_area, :total_area
   
   def initialize(face)
+    configuration = $solar_integration.configuration
     @face = face
     @normal = face.normal
-    @tile_length = $configuration.tile_length
+    @tile_length = configuration.tile_length
     @tile_area = @tile_length * @tile_length
     
     bounding_box = calculate_flat_bounding_box(face)
     v1 = bounding_box[1] - bounding_box[0]
     v2 = bounding_box[3] - bounding_box[0]
-    if $configuration.assume_faces_up and @normal % Z_AXIS < -0.01
+    if configuration.assume_faces_up and @normal % Z_AXIS < -0.01
       @normal.reverse!
       v1, v2 = v2, v1
     end
     
-    if $configuration.infer_square_length_from_face
+    if configuration.infer_square_length_from_face
       @square_length = [v1.length, v2.length].min
     else
-      @square_length = $configuration.square_length
+      @square_length = configuration.square_length
     end
     @subdivisions = (@square_length.to_f / @tile_length).ceil
     @square_length = @subdivisions * @tile_length

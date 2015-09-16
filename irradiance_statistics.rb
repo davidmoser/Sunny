@@ -52,8 +52,9 @@ class IrradianceStatistics < DhtmlDialog
   end
   
   def update_values
-    efficiency = Float($configuration.cell_efficiency) / 100
-    losses = Float(100 - $configuration.system_losses) / 100
+    configuration = $solar_integration.configuration
+    efficiency = Float(configuration.cell_efficiency) / 100
+    losses = Float(100 - configuration.system_losses) / 100
     
     update_tile_groups
     if @visible_tile_groups.empty?

@@ -10,7 +10,7 @@ require 'solar_integration/sky_sections.rb'
 class IrradianceRendering
   def initialize(face, sun_data)
     @grid = Grid.new(face)
-    @data_collectors = $configuration.active_data_collectors.collect { |c| c.new(@grid) }
+    @data_collectors = $solar_integration.configuration.active_data_collectors.collect { |c| c.new(@grid) }
     @irradiances = calculate_irradiances(sun_data, @grid.normal)
     @sky_sections = SkySections.new(@irradiances, @data_collectors)
     @shadow_caster = ShadowCaster.new(@grid)

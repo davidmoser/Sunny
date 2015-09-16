@@ -30,6 +30,5 @@ class Configuration < DhtmlDialog
     @system_losses = 11 # 8% temperature, 3% reflection
     @active_data_collectors = [IrradianceTiles] # not configurable at the moment
   end
-  
 end
 

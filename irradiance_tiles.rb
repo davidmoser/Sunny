@@ -9,10 +9,10 @@ class IrradianceTiles < DataCollector
 
   class TilesObserver < Sketchup::EntityObserver
     def onEraseEntity(entity)
-      $irradiance_statistics.update_values
+      $solar_integration.statistics.update_values
     end
     def onElementModified(entities, entity)
-      $irradiance_statistics.update_values
+      $solar_integration.statistics.update_values
     end
   end
   
@@ -34,13 +34,13 @@ class IrradianceTiles < DataCollector
     end
     
     @contribution_per_state = $solar_integration.sun_data.contribution_per_state
-    @ghi_factor = $solar_integration.sun_data.ghi_factor
     Sketchup.active_model.commit_operation
     
     @coloring_allowed = false
     @section_irradiances = Hash.new(0)
-    @scale = $irradiance_statistics.scale
-    $irradiance_statistics.add_tile_group(@group)
+    @statistics = $solar_integration.statistics
+    @scale = @statistics.scale
+    @statistics.add_tile_group(@group)
   end
   
   def prepare_section(sun_state, irradiance, section)
@@ -80,7 +80,7 @@ class IrradianceTiles < DataCollector
     total_irradiation = @tiles.values.collect{|s|s.irradiance}.reduce(:+) * @grid.tile_area
     save_to_model('total_irradiation', total_irradiation)
     @coloring_allowed = true
-    $irradiance_statistics.update_values
+    @statistics.update_values
   end
   
   def save_to_model(name, value)

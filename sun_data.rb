@@ -3,30 +3,23 @@ require 'solar_integration/globals.rb'
 
 # information about the sun positions, irradiances etc.
 class SunData
-  attr_reader :states, :contribution_per_state, :ghi_factor
+  attr_reader :states, :contribution_per_state
   
-  def initialize
-    @number_of_states = nil
-    @contribution_per_state = nil
-  end
-  
-  # randomly selects sun states, choosing e.g. a state every full hour for each
-  # day is very bad sampling (small differences between days, large differences
-  # between hours).
   def update
-    if not @number_of_states==$configuration.sun_states
-      load_sun_states
-    end
-    
-    calculate_contribution_per_state
+    update_sun_states
+    update_contribution_per_state
   end
   
-  def load_sun_states
-    @number_of_states = $configuration.sun_states
+  def update_sun_states
+    new_number_of_states = $solar_integration.configuration.sun_states
+    return if @number_of_states==new_number_of_states
+    @number_of_states = new_number_of_states
+    
+    # randomly selects sun states, choosing e.g. a state every full hour for each
+    # day is very bad sampling (small differences between days, large differences
+    # between hours).
     @states = Array.new
     
-    # initialize states
-    # TODO: don't use Sketchup, it's slow (ui feedback)
     si = Sketchup.active_model.shadow_info
     t_old = si['ShadowTime']
 
@@ -42,9 +35,15 @@ class SunData
     end
       
     si['ShadowTime'] = t_old # restore initial time
+    
+    Sketchup.active_model.set_attribute 'solar_integration', 'sun_data.states', @states
   end
   
-  def calculate_contribution_per_state
+  def update_contribution_per_state
+    new_ghi = $solar_integration.configuration.global_horizontal_irradiation
+    return if @ghi==new_ghi
+    @ghi = new_ghi
+    
     total_z_component = 0
     for state in @states
       vector = state.local_vector
@@ -56,7 +55,16 @@ class SunData
     
     # how much one state contributes to the yearly average
     # divide by 2 because we consider day times only
-    @contribution_per_state = $configuration.global_horizontal_irradiation / total_z_component
+    @contribution_per_state = @ghi / total_z_component
+    Sketchup.active_model.set_attribute 'solar_integration', 'sun_data.contribution_per_state', @contribution_per_state
+  end
+  
+  def update_from_model
+    dictionary = Sketchup.active_model.attribute_dictionary('solar_integration')
+    if dictionary
+      @contribution_per_state = dictionary['sun_data.contribution_per_state']
+      @states = dictionary['sun_data.states']
+    end
   end
 end
 

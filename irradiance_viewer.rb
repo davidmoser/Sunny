@@ -10,7 +10,7 @@ class IrradianceViewer
         @current_irradiance = irradiance
         relative_irradiance = entity.get_attribute 'solar_integration', 'relative_irradiance'
         view.tooltip = "irradiance: #{irradiance}, relative: #{relative_irradiance}"
-        $irradiance_statistics.set_pointer_value( irradiance, relative_irradiance )
+        @solar_integration.statistics.set_pointer_value( irradiance, relative_irradiance )
       end
     else
       view.tooltip = ''

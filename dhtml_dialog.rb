@@ -9,7 +9,6 @@ class DhtmlDialog < JsonSerialization
     
     initialize_values # Plugin default
     update_from_file # Saved Sketchup-wide default
-    update_from_model # Model settings
     
     if not @skip_variables
       @skip_variables = []

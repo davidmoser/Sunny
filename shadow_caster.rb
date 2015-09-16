@@ -54,6 +54,7 @@ class Pyramid
     @sun_polygon = polygon.collect{|p|p.transform(SUN_TRANSFORMATION)}
     
     @halve_diagonal = square_length.m / Math::sqrt(2)
+    @inclination_cutoff = $solar_integration.configuration.inclination_cutoff
   end
   
   def calculate_relative_polygon(position)
@@ -69,9 +70,9 @@ class Pyramid
     
     angle_error = to_degree(Math::asin(@halve_diagonal / distance))
     
-    # polygon is below (horizontal) inclanation cutoff
+    # polygon is below (horizontal) inclination cutoff
     polar_min_max = PolarMinMax.new(relative_polygon)
-    return false if 90 - to_degree(polar_min_max.pl_min) < $configuration.inclination_cutoff - angle_error
+    return false if 90 - to_degree(polar_min_max.pl_min) < @inclination_cutoff - angle_error
 
     # polygon is not in any possible sun_direction
     relative_polygon = calculate_relative_polygon(center.transform(SUN_TRANSFORMATION))
