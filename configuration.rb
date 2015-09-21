@@ -15,8 +15,13 @@ class Configuration < DhtmlDialog
     :system_losses,
     :active_data_collectors
   
-  def initialize_values
+  def initialize
     @skip_variables = ['@active_data_collectors']
+    @active_data_collectors = [IrradianceTiles] # not configurable at the moment
+    super
+  end
+  
+  def initialize_values
     @sun_states = 1000
     @tile_length = 0.3 # m
     @advanced_options_on = false
@@ -28,7 +33,6 @@ class Configuration < DhtmlDialog
     @global_horizontal_irradiation = 1200 # kWh / m2, central europe
     @cell_efficiency = 20 # %
     @system_losses = 11 # 8% temperature, 3% reflection
-    @active_data_collectors = [IrradianceTiles] # not configurable at the moment
   end
 end
 

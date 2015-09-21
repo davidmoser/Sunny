@@ -55,7 +55,7 @@
                 </div>
             </div>
             <svg style="width:200px; height:350px;"></svg>
-            <form name="scaleForm" ng-controller="scaleCtrl" class="form-horizontal" role="form">
+            <form name="scaleForm" id="scaleForm" ng-controller="scaleCtrl" class="form-horizontal" role="form">
                 <div class="form-group form-group-sm">
                     <div class="col-sm-12"> 
                         <div class="checkbox">
@@ -111,6 +111,7 @@
                     <div class="col-xs-6"> <button type="button" class="btn btn-default" ng-click="scalePropertiesVisible=true" ng-show="!scalePropertiesVisible">Edit scale</button> </div>
                     <div class="col-xs-6"></div>
                 </div>
+                <a href="skp:set_default" ng-show="!scalePropertiesVisible">Save current settings as default...</a>
             </form>
         </div>
         
@@ -124,6 +125,8 @@ function receiveData(data) {
     $scope = angular.element(document.getElementById('sunnyApp')).scope();
     $scope.data = data;
     $scope.$apply();
+    $scope = angular.element(document.getElementById('scaleForm')).scope();
+    $scope.cancelScaleChanges && $scope.cancelScaleChanges();
 }
 
 var app = angular.module('sunnyApp', ['colorpicker.module']);

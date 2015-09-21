@@ -1,4 +1,5 @@
 require 'solar_integration/scale.rb'
+require 'solar_integration/tiles_observer.rb'
 
 # singleton to hold all rendered tiles, color them, sum up irradiance
 class IrradianceStatistics < DhtmlDialog
@@ -6,11 +7,16 @@ class IrradianceStatistics < DhtmlDialog
     :pointer_value, :max_irradiance,
     :total_irradiation, :total_kwh, :kwp, :kwh_per_kwp
   
+  def initialize
+    @skip_variables = ['@tile_groups', '@visible_tile_groups', '@pointer_value']
+    super
+  end
+  
   def initialize_values
-    @skip_variables = ['@tile_groups']
     @scale = Scale.new(self)
     @max_irradiance = 10000
     @tile_groups = find_tile_groups(Sketchup.active_model.entities)
+    @tile_groups.each{|g| g.add_observer(TilesObserver.new)}
   end
   
   def add_tile_group(group)
@@ -47,7 +53,8 @@ class IrradianceStatistics < DhtmlDialog
   end
   
   def max_irradiance
-    @max_irradiance = tiless.collect{|t|t.max_irradiance}.max
+    update_tile_groups
+    @max_irradiance = tile_groups.collect{|g|get_group_property(g,'max_irradiance')}.max
     return @max_irradiance
   end
   
@@ -75,6 +82,15 @@ class IrradianceStatistics < DhtmlDialog
   end
   
   def sum_group_properties(name)
-    @visible_tile_groups.collect{|g| g.get_attribute('solar_integration', name)}.reduce(:+)
+    @visible_tile_groups.collect{|g| get_group_property(g, name)}.reduce(:+)
+  end
+  
+  def get_group_property(group, name)
+    group.get_attribute('solar_integration', name)
+  end
+  
+  def update_from_model
+    super
+    
   end
 end

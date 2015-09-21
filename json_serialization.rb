@@ -16,7 +16,7 @@ class JsonSerialization
             .collect { |v| [v[1..-1], instance_variable_get(v)] }]
 
     data['ruby_class'] = self.class.name
-    return data.to_json(options)
+    return JSON.pretty_generate(data, options)
   end
   
   def update_from_json(json)

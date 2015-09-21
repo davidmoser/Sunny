@@ -4,17 +4,9 @@ require 'solar_integration/globals.rb'
 require 'solar_integration/dhtml_dialog.rb'
 require 'solar_integration/tile.rb'
 require 'solar_integration/data_collector.rb'
+require 'solar_integration/tiles_observer.rb'
 
 class IrradianceTiles < DataCollector
-
-  class TilesObserver < Sketchup::EntityObserver
-    def onEraseEntity(entity)
-      $solar_integration.statistics.update_values
-    end
-    def onElementModified(entities, entity)
-      $solar_integration.statistics.update_values
-    end
-  end
   
   def initialize(grid)
     @grid = grid

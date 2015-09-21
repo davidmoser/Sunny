@@ -6,20 +6,20 @@ class SolarIntegrationAppObserver < Sketchup::AppObserver
   end
 
   def onOpenModel(model)
-    update_from_model
+    update
   end
 
   def onActivateModel(model)
-    update_from_model
+    update
   end
   
   def onNewModel(model)
-    update_from_model
+    update
   end
 
-  def update_from_model
-    @solar_integration.configuration.update_from_model
-    @solar_integration.statistics.update_from_model
-    @solar_integration.sun_data.update_from_model
+  def update
+    @solar_integration.configuration.update
+    @solar_integration.statistics.update
+    #@solar_integration.sun_data.update
   end
 end

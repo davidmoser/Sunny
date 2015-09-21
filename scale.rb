@@ -30,7 +30,7 @@ class Scale < JsonSerialization
     # volatile
     @current_hash = ''
     @irradiance_statistics = irradiance_statistics
-    @skip_variables = ['@current_hash', '@irradiance_statistics']
+    @skip_variables = ['@current_hash', '@irradiance_statistics', '@cache1', '@cache2']
   end
   
   def update_from_hash(hash)

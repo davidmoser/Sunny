@@ -1,4 +1,5 @@
 require 'solar_integration/json_serialization.rb'
+require 'json'
 
 class DhtmlDialog < JsonSerialization
   def initialize
@@ -7,20 +8,22 @@ class DhtmlDialog < JsonSerialization
     
     @dialog = UI::WebDialog.new(dialog_title, true, 'solar_integration_' + @dialog_name, 400, 400, 150, 150, true)
     
-    initialize_values # Plugin default
-    update_from_file # Saved Sketchup-wide default
+    update
     
     if not @skip_variables
       @skip_variables = []
     end
-    @skip_variables += ['@dialog', '@dialog_name', '@title']
+    @skip_variables += ['@dialog', '@dialog_name', '@title', '@saving_allowed']
     
     @dialog.set_file( template_path )
     
     @dialog.add_action_callback('return_data') do |dialog, json|
       puts json
       update_from_json(json)
-      save_to_model
+      if @saving_allowed
+        save_to_model
+      end
+      @saving_allowed = true
     end
     
     @dialog.add_action_callback('force_update_dialog') do |dialog|
@@ -36,7 +39,11 @@ class DhtmlDialog < JsonSerialization
     end
     
     @dialog.add_action_callback('set_default') do |dialog|
-      save_to_file
+      result = UI.messagebox('Are you sure you want to save the current settings as default?', MB_YESNO)
+      if result == IDYES
+        save_to_file
+        UI.messagebox('Settings have been saved.')
+      end
     end
   end
   
@@ -54,27 +61,35 @@ class DhtmlDialog < JsonSerialization
     return Sketchup.find_support_file(@dialog_name + '.html', INSTALLATION_FOLDER)
   end
   
+  def save_to_file
+    data = to_json(nil)
+    File.open(default_file_path, 'w') { |f| f.write(data) }
+  end
+  
   def save_to_model
     data = to_json(nil)
     Sketchup.active_model.set_attribute('solar_integration', @dialog_name, data)
   end
   
-  def update_from_model
-    data = Sketchup.active_model.get_attribute('solar_integration', @dialog_name)
-    if data
-      update_from_json(data)
-    end
-  end
-  
-  def save_to_file
-    data = to_json(nil)
-    File.open(default_file_path, 'w') { |f| f.write(data) }
+  def update
+    @saving_allowed = !@dialog.visible? # prevent saving from dialog callback
+    initialize_values # Plugin default
+    update_from_file # Saved Sketchup-wide default
+    update_from_model # Model settings
+    update_dialog
   end
   
   def update_from_file
     if File.exist? default_file_path
       file = File.open(default_file_path, 'r')
       update_from_json(file.read)
+    end
+  end
+  
+  def update_from_model
+    data = Sketchup.active_model.get_attribute('solar_integration', @dialog_name)
+    if data
+      update_from_json(data)
     end
   end
   
