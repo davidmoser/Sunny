@@ -46,13 +46,12 @@ class SolarIntegration
     group = face.parent.entities.add_group
     pyramids = Set.new
     shadow_caster.hash_map.all_values.each{|a| a.each{|p|pyramids.add(p)}}
-    progress = Progress.new(pyramids.length, 'Drawing pyramids...')
-    Sketchup.active_model.start_operation('Drawing pyramids', true)
+    progress = Progress.new(pyramids.length, 'Drawing pyramids')
     pyramids.each do |p|
       p.visualize(group.entities, center)
       progress.work
     end
-    Sketchup.active_model.commit_operation
+    progress.finish
   end
   
   def find_face_center(face)

@@ -234,7 +234,7 @@ class HashMapVisualizationSphere
   def initialize(entities, center, map, sun_transformation)
     az_resolution = pl_resolution = $solar_integration.configuration.sky_section_size
     @group = entities.add_group
-    progress = Progress.new(360/az_resolution * 180/pl_resolution, 'Creating hash sphere...')
+    progress = Progress.new(360/az_resolution * 180/pl_resolution, 'Creating hash sphere')
     @radius = 30
     ((az_resolution/2)..360).step(az_resolution) do |az|
       ((pl_resolution/2)..180).step(pl_resolution) do |pl|
@@ -244,6 +244,7 @@ class HashMapVisualizationSphere
         progress.work
       end
     end
+    progress.finish
   end
   
   def angles_to_vector(azimuth, polar)

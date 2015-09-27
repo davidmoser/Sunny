@@ -1,5 +1,6 @@
 require 'solar_integration/progress.rb'
 require 'solar_integration/globals.rb'
+require 'sketchup.rb'
 
 # information about the sun positions, irradiances etc.
 class SunData
@@ -126,13 +127,12 @@ class SunDataVisualizationSphere
     @group = entities.add_group
     @radius = 30
     
-    progress = Progress.new(sun_data.states.length, 'Creating sun data sphere...')
-    Sketchup.active_model.start_operation('Creating sun data sphere', true)
+    progress = Progress.new(sun_data.states.length, 'Creating sun data sphere')
     sun_data.states.each do |s|
       point = center + s.local_vector.transform(@radius)
       @group.entities.add_cpoint(point)
       progress.work
     end
-    Sketchup.active_model.commit_operation
+    progress.finish
   end
 end

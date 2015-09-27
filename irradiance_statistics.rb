@@ -1,5 +1,6 @@
 require 'solar_integration/scale.rb'
 require 'solar_integration/tiles_observer.rb'
+require 'sketchup.rb'
 
 # singleton to hold all rendered tiles, color them, sum up irradiance
 class IrradianceStatistics < DhtmlDialog

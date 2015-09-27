@@ -1,4 +1,5 @@
 require 'solar_integration/progress.rb'
+require 'sketchup.rb'
 
 class Scale < JsonSerialization
   attr_reader :color_by_relative_value
@@ -98,13 +99,12 @@ class Scale < JsonSerialization
     init_caches
     faces = @irradiance_statistics.tile_groups.collect{|g| g.entities.select{|e|e.is_a? Sketchup::Face}}.reduce(:+)
     if faces
-      progress = Progress.new(faces.length, 'Repainting tiles...')
-      Sketchup.active_model.start_operation('Repainting tiles', true)
+      progress = Progress.new(faces.length, 'Repainting tiles')
       faces.each do |face|
         recolor(face)
         progress.work
       end
-      Sketchup.active_model.commit_operation
+      progress.finish
     end
   end
 

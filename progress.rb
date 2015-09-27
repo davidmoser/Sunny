@@ -1,3 +1,4 @@
+require 'sketchup.rb'
 
 class Progress
   def initialize(total_work, label)
@@ -6,8 +7,9 @@ class Progress
     @current_work = 0
     @current_percent = 0
     @start_time = Time.new
+    Sketchup.active_model.start_operation(label, true)
   end
-  
+
   def work
     @current_work += 1
     percent = 100 * @current_work / @total_work
@@ -18,7 +20,12 @@ class Progress
       @current_percent = percent
       current_time = Time.new - @start_time
       time_left = current_time.to_i * (100 - percent) / (percent) 
-      Sketchup.status_text = "#{@label} #{percent}% done, #{time_left}s left"
+      Sketchup.status_text = "#{@label}... #{percent}% done, #{time_left}s left"
     end
+  end
+
+  def finish
+    Sketchup.status_text = ''
+    Sketchup.active_model.commit_operation
   end
 end

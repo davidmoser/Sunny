@@ -1,4 +1,5 @@
 require 'solar_integration/globals.rb'
+require 'sketchup.rb'
 
 class Menu
   def initialize(solar_integration)

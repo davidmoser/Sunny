@@ -1,3 +1,4 @@
+require 'sketchup.rb'
 
 module PolygonCollector
   def collect_model_polygons(model)

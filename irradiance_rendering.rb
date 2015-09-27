@@ -1,4 +1,3 @@
-require 'sketchup.rb'
 require 'solar_integration/progress.rb'
 require 'solar_integration/grid.rb'
 require 'solar_integration/spherical_hash_map.rb'
@@ -33,8 +32,7 @@ class IrradianceRendering
     prepare_position_t = 0
     @with_shadow = 0
     @without_shadow = 0
-    progress = Progress.new(@grid.number_of_subsquares, 'Integrating irradiances...')
-    Sketchup.active_model.start_operation('Integrating irradiances', true)
+    progress = Progress.new(@grid.number_of_subsquares, 'Integrating irradiances')
     for square in @grid.squares
       t1 = Time.new
       @shadow_caster.prepare_center(square.center)
@@ -52,7 +50,8 @@ class IrradianceRendering
       prepare_center_t += t2-t1
     end
     @data_collectors.each { |c| c.wrapup }
-    Sketchup.active_model.commit_operation
+    progress.finish
+    
     puts "prepare center #{prepare_center_t.round(2)}, "\
       "prepare position #{prepare_position_t.round(2)}, "\
       "render time #{render_t.round(2)}"

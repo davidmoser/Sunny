@@ -1,5 +1,6 @@
 require 'solar_integration/json_serialization.rb'
 require 'json'
+require 'sketchup.rb'
 
 class DhtmlDialog < JsonSerialization
   def initialize

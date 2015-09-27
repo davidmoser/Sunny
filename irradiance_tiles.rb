@@ -1,4 +1,3 @@
-require 'sketchup.rb'
 require 'solar_integration/progress.rb'
 require 'solar_integration/globals.rb'
 require 'solar_integration/dhtml_dialog.rb'
@@ -15,8 +14,7 @@ class IrradianceTiles < DataCollector
     save_to_model('total_area', grid.total_area)
     @group.add_observer(TilesObserver.new)
     
-    progress = Progress.new(grid.number_of_subsquares, 'Creating tiles...')
-    Sketchup.active_model.start_operation('Creating tiles', true)
+    progress = Progress.new(grid.number_of_subsquares, 'Creating tiles')
     @tiles = Hash.new
     grid.squares.each do |square|
       square.points.each do |p|
@@ -24,9 +22,9 @@ class IrradianceTiles < DataCollector
         progress.work
       end
     end
+    progress.finish
     
     @contribution_per_state = $solar_integration.sun_data.contribution_per_state
-    Sketchup.active_model.commit_operation
     
     @coloring_allowed = false
     @section_irradiances = Hash.new(0)
