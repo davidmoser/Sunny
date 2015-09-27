@@ -20,6 +20,5 @@ class SolarIntegrationAppObserver < Sketchup::AppObserver
   def update
     @solar_integration.configuration.update
     @solar_integration.statistics.update
-    #@solar_integration.sun_data.update
   end
 end

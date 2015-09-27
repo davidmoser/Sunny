@@ -9,7 +9,9 @@ class ShadowCaster
   
   include PolygonCollector
   
-  def initialize(grid)
+  def initialize(grid, sun_transformation)
+    @sun_transformation = sun_transformation
+    
     polygons = collect_model_polygons(Sketchup.active_model)
     
     # only consider polygons with points above face plane
@@ -17,7 +19,7 @@ class ShadowCaster
     @polygons = polygons.select{|p| p.any? {|v| lowest_face_point.vector_to(v)%grid.normal>1}}
     @polygons.select!{|p| p.any? {|v| lowest_face_point[2]<v[2]}}
     
-    @pyramids = @polygons.collect{|p| Pyramid.new(p, grid.square_length)}
+    @pyramids = @polygons.collect{|p| Pyramid.new(p, grid.square_length, @sun_transformation)}
   end
   
   def prepare_center(center)
@@ -25,7 +27,7 @@ class ShadowCaster
   end
   
   def prepare_position(position)
-    position = position.transform(SUN_TRANSFORMATION)
+    position = position.transform(@sun_transformation)
     @hash_map = SphericalHashMap.new
     for pyramid in @shadow_pyramids
       pyramid.calculate_normals(position)
@@ -49,9 +51,10 @@ end
 class Pyramid
   attr_reader :polygon, :relative_polygon
   
-  def initialize(polygon, square_length)
+  def initialize(polygon, square_length, sun_transformation)
+    @sun_transformation = sun_transformation
     @local_polygon = polygon
-    @sun_polygon = polygon.collect{|p|p.transform(SUN_TRANSFORMATION)}
+    @sun_polygon = polygon.collect{|p|p.transform(@sun_transformation)}
     
     @halve_diagonal = square_length.m / Math::sqrt(2)
     @inclination_cutoff = $solar_integration.configuration.inclination_cutoff
@@ -75,7 +78,7 @@ class Pyramid
     return false if 90 - to_degree(polar_min_max.pl_min) < @inclination_cutoff - angle_error
 
     # polygon is not in any possible sun_direction
-    relative_polygon = calculate_relative_polygon(center.transform(SUN_TRANSFORMATION))
+    relative_polygon = calculate_relative_polygon(center.transform(@sun_transformation))
     polar_min_max = PolarMinMax.new(relative_polygon)
     cutoff = ECLIPTIC_ANGLE + angle_error
     return false if 90 - to_degree(polar_min_max.pl_min) < -cutoff \

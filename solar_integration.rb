@@ -66,7 +66,6 @@ class SolarIntegration
   def integrate(face)
     @sun_data.update
     @configuration.save_to_model
-    #@sun_data.save_to_model
     rendering = IrradianceRendering.new(face, @sun_data)
     rendering.render()
     @statistics.save_to_model

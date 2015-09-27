@@ -13,7 +13,7 @@ class IrradianceRendering
     @data_collectors = $solar_integration.configuration.active_data_collectors.collect { |c| c.new(@grid) }
     @irradiances = calculate_irradiances(sun_data, @grid.normal)
     @sky_sections = SkySections.new(@irradiances, @data_collectors)
-    @shadow_caster = ShadowCaster.new(@grid)
+    @shadow_caster = ShadowCaster.new(@grid, sun_data.sun_transformation)
   end
   
   def calculate_irradiances(sun_data, normal)
