@@ -30,7 +30,7 @@ class Configuration < DhtmlDialog
     @inclination_cutoff = 30 # degrees
     @sky_section_size = 5 # degrees
     @assume_faces_up = true
-    @global_horizontal_irradiation = 1200 # kWh / m2, central europe
+    @global_horizontal_irradiation = 1200 # kWh / m2 / year, central europe
     @cell_efficiency = 20 # %
     @system_losses = 11 # 8% temperature, 3% reflection
   end

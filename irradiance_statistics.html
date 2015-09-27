@@ -59,11 +59,9 @@
                 <div class="form-group form-group-sm">
                     <div class="col-sm-12"> 
                         <div class="checkbox">
-                            <label><input type="checkbox" ng-model="data.scale.color_by_relative_value" ng-change="createScale()"/>
+                            <label><input type="checkbox" ng-model="data.scale.color_by_relative_value" ng-change="createScale()"
+                                title="faces are colored independently, with 100% being the maximum possible irradiance for a face" />
                                 Use face-relative coloring
-                                <a href="#" data-toggle="tooltip" title="faces are colored independently, with 100% being the maximum possible irradiance for a face">
-                                help
-                                </a>
                             </label> 
                         </div>
                     </div>
