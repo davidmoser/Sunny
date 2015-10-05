@@ -15,11 +15,7 @@ class FacesIntegration
     @group.name = 'Solar Integration'
     for face in faces
       grid = Grid.new(face, @configuration)
-      integrate_grid(grid)
-      component = get_component(face)
-      if component
-        integrate_instances(grid, component)
-      end
+      integrate_definition(face, grid)
     end
   end
   
@@ -28,32 +24,28 @@ class FacesIntegration
     rendering.render()
   end
   
-  # integrate all other instances (the selected instance is special
-  # since ruby returns global coordinates for the group being edited)
-  def integrate_instances(grid, component)
-    for instance in component.instances
-      transformation = get_transformation(instance)
-      unless transformation.identity?
-        component_grid = grid.transform(transformation)
-        integrate_grid(component_grid)
+  def integrate_definition(face, grid)
+    transformations = get_transformations(face.parent)
+    for transformation in transformations
+      component_grid = grid.transform(transformation)
+      integrate_grid(component_grid)
+    end
+  end
+  
+  # gathers all transformations for our face, taking into account
+  # nested component definitions / groups
+  def get_transformations(definition)
+    transformations = []
+    if definition.is_a? Sketchup::Model
+      transformations.push(Geom::Transformation.new)
+    else
+      definition.instances.each do |i|
+        get_transformations(i.parent).each do |t|
+          transformations.push(i.transformation*t)
+        end
       end
     end
+    return transformations
   end
   
-  def get_transformation(coords)
-    transformation = Geom::Transformation.new
-    while not coords.is_a? Sketchup::Model
-      transformation = transformation * coords.transformation
-      coords = coords.parent
-    end
-    return transformation
-  end
-  
-  def get_component(entity)
-    while not entity.is_a? Sketchup::Model
-      return entity if entity.is_a? Sketchup::ComponentDefinition
-      entity = entity.parent
-    end
-    return nil
-  end
 end
