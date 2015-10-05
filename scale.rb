@@ -32,6 +32,7 @@ class Scale < JsonSerialization
     @current_hash = ''
     @irradiance_statistics = irradiance_statistics
     @skip_variables = ['@current_hash', '@irradiance_statistics', '@cache1', '@cache2']
+    init_caches
   end
   
   def update_from_hash(hash)
@@ -40,10 +41,9 @@ class Scale < JsonSerialization
       @current_hash = hash
       super(hash)
       @irradiance_statistics.set_pointer_value(nil, nil)
+      init_caches
       if not initializing
         update_tile_colors
-      else
-        init_caches
       end
     end
   end
@@ -96,7 +96,6 @@ class Scale < JsonSerialization
   end
   
   def update_tile_colors
-    init_caches
     faces = @irradiance_statistics.tile_groups.collect{|g| g.entities.select{|e|e.is_a? Sketchup::Face}}.reduce(:+)
     if faces
       progress = Progress.new(faces.length, 'Repainting tiles')

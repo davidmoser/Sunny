@@ -7,12 +7,12 @@ require 'solar_integration/tiles_observer.rb'
 
 class IrradianceTiles < DataCollector
   
-  def initialize(grid)
+  def initialize(grid, main_group)
     @grid = grid
-    @group = grid.face.parent.entities.add_group
+    @group = main_group.entities.add_group
     @group.name = 'Irradiance Tiles'
-    save_to_model('total_area', grid.total_area)
     @group.add_observer(TilesObserver.new)
+    save_to_model('total_area', grid.total_area)
     
     progress = Progress.new(grid.number_of_subsquares, 'Creating tiles')
     @tiles = Hash.new

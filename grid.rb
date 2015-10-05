@@ -1,27 +1,27 @@
-require 'solar_integration/flat_bounding_box.rb'
+require 'solar_integration/bounding_rectangle.rb'
 require 'solar_integration/globals.rb'
+require 'solar_integration/square.rb'
 
 # a grid is the splitting of a face into small @squares
 # all the small squares have the common @normal, length of the normal is the
 # area of a square in m^2
 class Grid
-  include FlatBoundingBox
+  include BoundingRectangle
   
   attr_reader :squares, :number_of_subsquares, :side1, :side2, :face, :normal
   attr_reader :subdivisions, :subside1, :subside2, :square_length, :tile_area, :total_area
   
-  def initialize(face)
-    configuration = $solar_integration.configuration
+  def initialize(face, configuration)
     @face = face
     @normal = face.normal
     @tile_length = configuration.tile_length
     @tile_area = @tile_length * @tile_length
     
-    bounding_box = calculate_flat_bounding_box(face)
-    v1 = bounding_box[1] - bounding_box[0]
-    v2 = bounding_box[3] - bounding_box[0]
+    bounding_rectangle = calculate_bounding_rectangle(face)
+    v1 = bounding_rectangle[1] - bounding_rectangle[0]
+    v2 = bounding_rectangle[3] - bounding_rectangle[0]
     if configuration.assume_faces_up and @normal % Z_AXIS < -0.01
-      @normal.reverse!
+      @normal = @normal.reverse
       v1, v2 = v2, v1
     end
     
@@ -40,7 +40,7 @@ class Grid
     @subside1 = @side1.transform(1.0/@subdivisions)
     @subside2 = @side2.transform(1.0/@subdivisions)
     
-    base = bounding_box[0]
+    base = bounding_rectangle[0]
     
     @squares = []
     @number_of_subsquares = 0
@@ -56,23 +56,26 @@ class Grid
     end
     
     @total_area = @number_of_subsquares * @tile_area
-  end  
-end
-
-class Square
-  attr_reader :center, :points
+  end
   
-  def initialize(grid, center)
-    @center = center
-    @points = []
-    corner = center + Geom::Vector3d.linear_combination(-0.5 * (grid.subdivisions-1),grid.subside1,-0.5 * (grid.subdivisions-1),grid.subside2)
-    (0..grid.subdivisions).each do |i|
-      (0..grid.subdivisions).each do |j|
-        point = corner + Geom::Vector3d.linear_combination(i,grid.subside1,j,grid.subside2)
-        if grid.face.classify_point(point) == 1
-          @points.push point + grid.normal
-        end
-      end
-    end
+  def initialize_clone(source)
+    super
+    @normal = source.normal.clone
+    @side1 = source.side1.clone
+    @side2 = source.side2.clone
+    @subside1 = source.subside1.clone
+    @subside2 = source.subside2.clone
+    @squares = source.squares.collect{|s|s.clone}
+  end
+  
+  def transform(transformation)
+    c = clone
+    c.transform!(transformation)
+    return c
+  end
+  
+  def transform!(transformation)
+    [@normal, @side1, @side2, @subside1, @subside2].concat(@squares)
+              .each{|s|s.transform!(transformation)}
   end
 end

@@ -6,6 +6,7 @@ require 'solar_integration/spherical_hash_map.rb'
 require 'solar_integration/shadow_caster.rb'
 require 'solar_integration/menu.rb'
 require 'solar_integration/irradiance_rendering.rb'
+require 'solar_integration/faces_integration.rb'
 require 'solar_integration/solar_integration_app_observer.rb'
 require 'set'
 
@@ -62,13 +63,12 @@ class SolarIntegration
     return Geom::Point3d.new(center.to_a) + face.normal
   end
   
-  def integrate(face)
-    @sun_data.update
-    @configuration.save_to_model
-    rendering = IrradianceRendering.new(face, @sun_data)
-    rendering.render()
-    @statistics.save_to_model
+  def integrate
+    faces = Sketchup.active_model.selection.select{|f|f.typename=='Face'}
+    integration = FacesIntegration.new(self)
+    integration.integrate(faces)
   end
+  
 end
 
 $solar_integration = SolarIntegration.new

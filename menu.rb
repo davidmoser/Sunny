@@ -7,7 +7,9 @@ class Menu
     
     @menu = UI.menu.add_submenu('Solar Integration')
     
-    add_faces_menu('Integrate selection', :integrate)
+    add_menu('Integrate selection') do
+      $solar_integration.integrate
+    end
     
     add_menu('Irradiance Viewer') do
       Sketchup.active_model.select_tool IrradianceViewer.new

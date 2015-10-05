@@ -1,10 +1,11 @@
 require 'solar_integration/globals.rb'
 
-module FlatBoundingBox
-  # the flat bounding box consists of four 3DPoints forming a rectangle with right
-  # angles, in the same plane as the given face, and containing the face
+module BoundingRectangle
+  # the bounding rectangle consists of four 3DPoints forming a rectangle with right
+  # angles, in the same plane as the given face, and containing the face and
+  # aligned with the longest edge of the face
 
-  def calculate_flat_bounding_box(face)
+  def calculate_bounding_rectangle(face)
     u, v = find_uv(face)
     u_min, u_max, v_min, v_max = find_extremal_points(u, v, face.vertices)
 
@@ -18,8 +19,7 @@ module FlatBoundingBox
     c3 = Geom.intersect_line_line(l3, l4)
     c4 = Geom.intersect_line_line(l4, l1)
 
-    bounding_box = [c1, c2, c3, c4]
-    return bounding_box
+    return [c1, c2, c3, c4]
   end
 
   def find_uv(face)

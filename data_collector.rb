@@ -4,7 +4,7 @@ class DataCollector
   # are rendered, i.e. shadow is checked, is set to this variable
   attr_writer :current_point
   
-  def initialize(grid, sun_data)
+  def initialize(grid, group)
   end
   
   # for performance reasons the sky is split in sections

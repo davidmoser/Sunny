@@ -7,6 +7,10 @@ class SunData
   attr_reader :states, :contribution_per_state, :sun_transformation
   
   def initialize
+    clear
+  end
+  
+  def clear
     @states = nil
     @contribution_per_state = nil
   end
@@ -24,28 +28,31 @@ class SunData
     update_sun_transformation
     # recalculate or load sun states
     sun_states_change = nos_changed or la_changed or lo_changed or na_changed
-    if sun_states_change or not load_states
+    if not sun_states_change and not @states
+      load_states
+    end
+    if sun_states_change or not @states
       update_sun_states
     end
+    
     # recalculate or load contribution per state
-    if sun_states_change or ghi_changed
-      update_contribution_per_state
-    elsif not @contribution_per_state
+    contrib_change = sun_states_change or ghi_changed
+    if not contrib_change and not @contribution_per_state
       @contribution_per_state = get_from_model('contribution_per_state')
+    end
+    if contrib_change or not @contribution_per_state
+      update_contribution_per_state
     end
   end
   
   def load_states
-    if not @states
-      begin
-        data = get_from_model('states')
-        @states = data.collect{|d| SunState.new(d[0], d[1], @sun_transformation)}
-      rescue
-        puts "exception while loading sun states, data is:\n" + data.to_s
-        return false
-      end
+    begin
+      data = get_from_model('states')
+      return if not data
+      @states = data.collect{|d| SunState.new(d[0], d[1], @sun_transformation)}
+    rescue
+      puts "exception while loading sun states, data is:\n" + data.to_s
     end
-    return true
   end
   
   def update_parameter(name, value)

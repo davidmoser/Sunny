@@ -89,9 +89,4 @@ class IrradianceStatistics < DhtmlDialog
   def get_group_property(group, name)
     group.get_attribute('solar_integration', name)
   end
-  
-  def update_from_model
-    super
-    
-  end
 end
