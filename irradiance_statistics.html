@@ -16,6 +16,12 @@
         <!-- saved from url=(0014)about:internet -->
     </head>
     <body>
+<script>
+window.onerror = function(errorMsg, url, lineNumber){
+  window.location.href = "skp:puts@" + encodeURIComponent("JavaScript error:\n"+url+" (line "+lineNumber+"): "+errorMsg);
+  return true;
+}
+</script>
         <div id="sunnyApp" class="container-fluid" ng-app="sunnyApp" ng-controller="sunnyCtrl">
             <div>
                 <div class="row">
@@ -139,7 +145,7 @@ app.controller('sunnyCtrl', function($scope) {
     d3.selectAll("svg").append("g").attr("id","colorbar");
     
     $scope.$watch('data.pointer_value', function(colorBarValue, oldData) {
-        $scope.pointer.pointTo(colorBarValue);
+        // $scope.pointer.pointTo(colorBarValue);
     });
     initScaleValues($scope);
     
@@ -150,24 +156,29 @@ app.controller('sunnyCtrl', function($scope) {
     }
     
     $scope.saveScaleChanges = function() {
-        $scope.data.scale.color1 = colorToArray($scope.color1);
-        $scope.data.scale.color2 = colorToArray($scope.color2);
-        $scope.data.scale.color3 = colorToArray($scope.color3);
-        $scope.data.scale.color1value = $scope.color1value;
-        $scope.data.scale.color2value = $scope.color2value;
-        $scope.data.scale.color3value = $scope.color3value;
-        $scope.scalePropertiesVisible = false;
+        if(typeof $scope.data !== 'undefined') {
+           $scope.data.scale.color1 = colorToArray($scope.color1);
+           $scope.data.scale.color2 = colorToArray($scope.color2);
+           $scope.data.scale.color3 = colorToArray($scope.color3);
+           $scope.data.scale.color1value = $scope.color1value;
+           $scope.data.scale.color2value = $scope.color2value;
+           $scope.data.scale.color3value = $scope.color3value;
+           $scope.scalePropertiesVisible = false;
+        }
     };
     
     $scope.createScale = function() {
         var max;
-        if($scope.data.scale.color_by_relative_value) {
+        if(typeof $scope.data !== 'undefined') {
+          if($scope.data.scale.color_by_relative_value) {
             max = 1;
-        } else {
+          } else {
             max = $scope.data.max_irradiance / 100;
+          }
         }
 
         var scale;
+        if(typeof $scope.data !== 'undefined') {
         if($scope.data.scale.color_gradient) {
             scale = d3.scale.linear()
                 .domain([$scope.color3value*max,$scope.color2value*max,$scope.color1value*max])
@@ -177,7 +188,7 @@ app.controller('sunnyCtrl', function($scope) {
             scale = d3.scale.threshold()
                 .domain([0,$scope.color3value*max,$scope.color2value*max,100*max])
                 .range([$scope.color3,$scope.color3,$scope.color2,$scope.color1,$scope.color1]);
-        }
+        }}
 
         var colorbar = Colorbar()
             .origin([0,0])
@@ -186,7 +197,7 @@ app.controller('sunnyCtrl', function($scope) {
             .thickness(20)
             .orient('vertical');
 
-        $scope.pointer = d3.selectAll("#colorbar").call(colorbar);
+        //$scope.pointer = d3.selectAll("#colorbar").call(colorbar);
     };
     
     $scope.createScale();
@@ -202,6 +213,7 @@ app.controller('sunnyCtrl', function($scope) {
 });
 
 function initScaleValues($scope) {
+    if( typeof $scope.data === 'undefined' ) return;
     $scope.color1 = arrayToColor($scope.data.scale.color1);
     $scope.color2 = arrayToColor($scope.data.scale.color2);
     $scope.color3 = arrayToColor($scope.data.scale.color3);

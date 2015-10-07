@@ -27,6 +27,10 @@ class DhtmlDialog < JsonSerialization
       @saving_allowed = true
     end
     
+    @dialog.add_action_callback('puts') do |dialog, text|
+      puts text
+    end
+
     @dialog.add_action_callback('force_update_dialog') do |dialog|
       update_dialog
     end
