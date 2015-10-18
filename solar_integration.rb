@@ -33,10 +33,11 @@ class SolarIntegration
   
   def visualize_hash_map(face)
     center = find_face_center(face)
-    shadow_caster = ShadowCaster.new(Grid.new(face))
+    @sun_data.update
+    shadow_caster = ShadowCaster.new(Grid.new(face, @configuration), @sun_data.sun_transformation)
     shadow_caster.prepare_center(center)
     shadow_caster.prepare_position(center)
-    HashMapVisualizationSphere.new(face.parent.entities, center, shadow_caster.hash_map, 10, 10, SUN_TRANSFORMATION)
+    HashMapVisualizationSphere.new(face.parent.entities, center, shadow_caster.hash_map, @sun_data.sun_transformation)
   end
   
   def visualize_shadow_pyramids(face)
