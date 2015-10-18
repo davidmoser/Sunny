@@ -34,7 +34,7 @@ class IrradianceTiles < DataCollector
   end
   
   def prepare_section(sun_state, irradiance, section)
-    @section_irradiances[section] += irradiance # % of W/m2
+    @section_irradiances[section] += irradiance
   end
   
   def section_preparation_finished
@@ -52,7 +52,7 @@ class IrradianceTiles < DataCollector
   
   def put(sun_state, irradiance)
     return if not irradiance
-    @current_irradiance += irradiance # W/m2
+    @current_irradiance += irradiance
   end
 
   def put_section(section)

@@ -1,5 +1,6 @@
 require 'solar_integration/globals.rb'
 require 'sketchup.rb'
+require 'solar_integration/irradiance_viewer.rb'
 
 class Menu
   def initialize(solar_integration)
@@ -37,7 +38,7 @@ class Menu
   def add_faces_menu(name, method)
     add_menu(name) do
       selection = Sketchup.active_model.selection
-      faces = selection.select{|f|f.typename=='Face'}
+      faces = selection.select{|f|f.is_a? Sketchup::Face}
       faces.each do |f|
         @solar_integration.send(method, f)
       end
