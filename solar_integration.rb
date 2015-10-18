@@ -41,10 +41,12 @@ class SolarIntegration
   
   def visualize_shadow_pyramids(face)
     center = find_face_center(face)
-    shadow_caster = ShadowCaster.new(Grid.new(face))
+    @sun_data.update
+    shadow_caster = ShadowCaster.new(Grid.new(face, @configuration), @sun_data.sun_transformation)
     shadow_caster.prepare_center(center)
     shadow_caster.prepare_position(center)
-    group = face.parent.entities.add_group
+    group = Sketchup.active_model.entities.add_group
+    group.name = 'Shadow Pyramids'
     pyramids = Set.new
     shadow_caster.hash_map.all_values.each{|a| a.each{|p|pyramids.add(p)}}
     progress = Progress.new(pyramids.length, 'Drawing pyramids')
