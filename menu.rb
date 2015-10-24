@@ -13,7 +13,12 @@ class Menu
     end
     
     add_menu('Irradiance Viewer') do
-      Sketchup.active_model.select_tool IrradianceViewer.new
+      model = Sketchup.active_model
+      # leave edit sessions
+      while model.active_entities!= model.entities and model.close_active
+      end
+
+      model.select_tool IrradianceViewer.new
     end
 
     add_menu('Configuration ...') do
