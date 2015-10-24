@@ -10,20 +10,20 @@ class JsonSerialization
     end
 
     data = Hash[
-      instance_variables
-            .select{|v|!@skip_variables or !@skip_variables.include?(v.to_s)}
-            .select{|v|v.to_s.start_with?('@')}
+        instance_variables
+            .select { |v| !@skip_variables or !@skip_variables.include?(v.to_s) }
+            .select { |v| v.to_s.start_with?('@') }
             .collect { |v| [v[1..-1], instance_variable_get(v)] }]
 
     data['ruby_class'] = self.class.name
     return JSON.pretty_generate(data, options)
   end
-  
+
   def update_from_json(json)
     hash = JSON.parse(json, symbolize_names: true)
     update_from_hash(hash)
   end
-  
+
   def update_from_hash(hash)
     hash.each do |k, v|
       next if k == 'ruby_class'
@@ -40,7 +40,7 @@ class JsonSerialization
       end
     end
   end
-  
+
   def self.from_json(data)
     obj = self.new
     self.update_from_json(obj, data)

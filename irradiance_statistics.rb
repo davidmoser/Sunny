@@ -5,25 +5,25 @@ require 'sketchup.rb'
 # singleton to hold all rendered tiles, color them, sum up irradiance
 class IrradianceStatistics < DhtmlDialog
   attr_accessor :scale, :tile_groups,
-    :pointer_value, :max_irradiance,
-    :total_irradiation, :total_kwh, :kwp, :kwh_per_kwp
-  
+                :pointer_value, :max_irradiance,
+                :total_irradiation, :total_kwh, :kwp, :kwh_per_kwp
+
   def initialize
     @skip_variables = ['@tile_groups', '@visible_tile_groups', '@pointer_value']
     super
   end
-  
+
   def initialize_values
     @scale = Scale.new(self)
     @max_irradiance = 10000
     @tile_groups = find_tile_groups(Sketchup.active_model.entities)
-    @tile_groups.each{|g| g.add_observer(TilesObserver.new)}
+    @tile_groups.each { |g| g.add_observer(TilesObserver.new) }
   end
-  
+
   def add_tile_group(group)
     @tile_groups.push group
   end
-  
+
   def set_pointer_value(irradiance, relative_irradiance)
     if @scale.color_by_relative_value
       @pointer_value = relative_irradiance
@@ -33,7 +33,7 @@ class IrradianceStatistics < DhtmlDialog
     puts @pointer_value
     update_dialog
   end
-  
+
   def find_tile_groups(entities)
     groups = []
     entities.each do |e|
@@ -47,23 +47,23 @@ class IrradianceStatistics < DhtmlDialog
     end
     return groups
   end
-  
+
   def update_tile_groups
-    @tile_groups.reject! {|g| g.deleted?}
-    @visible_tile_groups = @tile_groups.select{|g| g.visible? }
+    @tile_groups.reject! { |g| g.deleted? }
+    @visible_tile_groups = @tile_groups.select { |g| g.visible? }
   end
-  
+
   def max_irradiance
     update_tile_groups
-    @max_irradiance = tile_groups.collect{|g|get_group_property(g,'max_irradiance')}.max
+    @max_irradiance = tile_groups.collect { |g| get_group_property(g, 'max_irradiance') }.max
     return @max_irradiance
   end
-  
+
   def update_values
     configuration = $solar_integration.configuration
     efficiency = Float(configuration.cell_efficiency) / 100
     losses = Float(100 - configuration.system_losses) / 100
-    
+
     update_tile_groups
     if @visible_tile_groups.empty?
       @total_irradiation = 0
@@ -78,14 +78,14 @@ class IrradianceStatistics < DhtmlDialog
       @kwp = @area * efficiency
       @kwh_per_kwp = @total_kwh / @kwp
     end
-    
+
     update_dialog
   end
-  
+
   def sum_group_properties(name)
-    @visible_tile_groups.collect{|g| get_group_property(g, name)}.reduce(:+)
+    @visible_tile_groups.collect { |g| get_group_property(g, name) }.reduce(:+)
   end
-  
+
   def get_group_property(group, name)
     group.get_attribute('solar_integration', name)
   end

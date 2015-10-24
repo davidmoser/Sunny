@@ -12,7 +12,7 @@ class SolarIntegrationAppObserver < Sketchup::AppObserver
   def onActivateModel(model)
     update
   end
-  
+
   def onNewModel(model)
     update
   end

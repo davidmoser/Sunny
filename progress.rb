@@ -19,7 +19,7 @@ class Progress
       end
       @current_percent = percent
       current_time = Time.new - @start_time
-      time_left = current_time.to_i * (100 - percent) / (percent) 
+      time_left = current_time.to_i * (100 - percent) / (percent)
       Sketchup.status_text = "#{@label}... #{percent}% done, #{time_left}s left"
     end
   end

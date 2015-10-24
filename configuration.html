@@ -1,107 +1,139 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>Sunny Configuration</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=0.5">
-        <link rel="stylesheet" href="web/bootstrap.min.css">
-        <script src="web/jquery.min.js"></script>
-        <script src="web/bootstrap.min.js"></script>
-        <script src= "web/angular.min.js"></script>
-    </head>
-    <body>
-        <div id="sunnyApp" class="container-fluid" ng-app="sunnyApp" ng-controller="sunnyCtrl">
-            <form class="form-horizontal" role="form">
-                <div class="form-group form-group-sm">
-                    <label class="col-sm-2 control-label" for="input_sun_states" title="Number of sun positions which are used for the irradiance calculation.
-If the coloring of the irradiance tiles seems irregular (not smooth), increase this value."> Number of sun positions </label>
-                    <div class="col-sm-2"> <input class="form-control" type="number" id="input_sun_states" ng-model="data.sun_states" integer /> </div>
-                    <label class="col-sm-2 control-label" for="input_tile_length" title="Side length of the irradiance grid tiles.">Length of grid tiles (m)</label>
-                    <div class="col-sm-2"> <input class="form-control" type="number" id="input_tile_length" ng-model="data.tile_length" float /> </div>
-                    <label class="col-sm-2 control-label" for="input_global_horizontal_irradiation" title="Total irradiance on a horizontal plane at the systems geographic location.
-This incorporates all loss effects due to atmospheric absorption (including clouds), reflection and refraction.">Global horizontal irradiance (kWh/m^2/year)</label>
-                    <div class="col-sm-2"> <input class="form-control" type="number" id="input_global_horizontal_irradiation" ng-model="data.global_horizontal_irradiation" float /> </div>
-                    <label class="col-sm-2 control-label" for="input_cell_efficiency" title="Efficiency of the solar cells to convert light energy to electric energy.">Solar cell efficiency (%)</label>
-                    <div class="col-sm-2"> <input class="form-control" type="number" id="input_cell_efficiency" ng-model="data.cell_efficiency" float /> </div>
-                    <label class="col-sm-2 control-label" for="input_system_losses" title="All system specific losses, e.g. surface reflection, cell temperature, electricity conduction and conversion.
-The calculation only factors in the geometric position of panels with respect to the sun.">System losses (%)</label>
-                    <div class="col-sm-2"> <input class="form-control" type="number" id="input_system_losses" ng-model="data.system_losses" float /> </div>
-                </div>
-                <div class="form-group form-group-sm">
-                    <div class="col-sm-12"> 
-                        <div class="checkbox">
-                        <label><input type="checkbox" ng-model="data.advanced_options_on"/> Advanced settings</label> 
-                        </div>
-                    </div>
-                </div>
-                <div ng-show="data.advanced_options_on">
-                    <div class="form-group form-group-sm">
-                        <div class="col-sm-4"> 
-                            <div class="checkbox">
-                            <label>  <input type="checkbox" ng-model="data.infer_square_length_from_face" /> Infer square length from face </label>
-                            </div>
-                        </div>
-                        <label class="col-sm-2 control-label" for="input_square_length"> Square length (m)</label>
-                        <div class="col-sm-2"> <input class="form-control" type="number" id="input_square_length" ng-model="data.square_length" float ng-disabled="data.infer_square_length_from_face"/>  </div>
-                        <div class="col-sm-4"><div></div></div>
-                    </div>
-                    <div class="form-group form-group-sm">
-                        <label class="col-sm-2 control-label" for="input_inclination_cutoff"> Inclination cutoff (degree)</label>
-                        <div class="col-sm-2"> <input class="form-control" type="number" id="input_inclination_cutoff" ng-model="data.inclination_cutoff" integer /> </div>
-                        <label class="col-sm-2 control-label" for="input_sky_section_size"> Sky section size (degree)</label>
-                        <div class="col-sm-2"> <input class="form-control" type="number" id="input_sky_section_size" ng-model="data.sky_section_size" integer /> </div>
-                        <div class="col-sm-4"><div></div></div>
-                    </div>
-                    <div class="form-group form-group-sm">
-                        <div class="col-sm-4"> 
-                            <div class="checkbox">
-                            <label>  <input type="checkbox" ng-model="data.assume_faces_up" /> Assume all integration faces are directed upwards
-                                <a href="#" data-toggle="tooltip" title="Assume all integration faces are faced upwards, thereby correcting for wrongly oriented faces. Switch this off if you want to calculate the irradiance for downward oriented faces.">
-                                    help
-                                </a>
-                            </label>
-                            </div>
-                        </div>
-                        <div class="col-sm-8"><div></div></div>
-                    </div>
-                </div>
-            </form>
-            <a href="skp:set_default">Save current settings as default...</a>
-        </div>
-        <script>
-function receiveData(data) {
-    $scope = angular.element(document.getElementById('sunnyApp')).scope();
-    $scope.data = data;
-    $scope.$apply();
-}
+<head>
+    <title>Sunny Configuration</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.5">
+    <link rel="stylesheet" href="web/bootstrap.min.css">
+    <script src="web/jquery.min.js"></script>
+    <script src="web/bootstrap.min.js"></script>
+    <script src="web/angular.min.js"></script>
+</head>
+<body>
+<div id="sunnyApp" class="container-fluid" ng-app="sunnyApp" ng-controller="sunnyCtrl">
+    <form class="form-horizontal" role="form">
+        <div class="form-group form-group-sm">
+            <label class="col-sm-2 control-label" for="input_sun_states" title="Number of sun positions which are used for the irradiance calculation.
+If the coloring of the irradiance tiles seems irregular (not smooth), increase this value."> Number of sun
+                positions </label>
 
-var app = angular.module('sunnyApp', []);
-app.controller('sunnyCtrl', function($scope) {
-    window.location.href = 'skp:force_update_dialog';
-    $scope.$watchCollection('data', function (newData, oldData) {
-        if(newData !== oldData) {
-           window.location.href = 'skp:return_data@' + JSON.stringify(newData);
-        }
+            <div class="col-sm-2"><input class="form-control" type="number" id="input_sun_states"
+                                         ng-model="data.sun_states" integer/></div>
+            <label class="col-sm-2 control-label" for="input_tile_length"
+                   title="Side length of the irradiance grid tiles.">Length of grid tiles (m)</label>
+
+            <div class="col-sm-2"><input class="form-control" type="number" id="input_tile_length"
+                                         ng-model="data.tile_length" float/></div>
+            <label class="col-sm-2 control-label" for="input_global_horizontal_irradiation" title="Total irradiance on a horizontal plane at the systems geographic location.
+This incorporates all loss effects due to atmospheric absorption (including clouds), reflection and refraction.">Global
+                horizontal irradiance (kWh/m^2/year)</label>
+
+            <div class="col-sm-2"><input class="form-control" type="number" id="input_global_horizontal_irradiation"
+                                         ng-model="data.global_horizontal_irradiation" float/></div>
+            <label class="col-sm-2 control-label" for="input_cell_efficiency"
+                   title="Efficiency of the solar cells to convert light energy to electric energy.">Solar cell
+                efficiency (%)</label>
+
+            <div class="col-sm-2"><input class="form-control" type="number" id="input_cell_efficiency"
+                                         ng-model="data.cell_efficiency" float/></div>
+            <label class="col-sm-2 control-label" for="input_system_losses" title="All system specific losses, e.g. surface reflection, cell temperature, electricity conduction and conversion.
+The calculation only factors in the geometric position of panels with respect to the sun.">System losses (%)</label>
+
+            <div class="col-sm-2"><input class="form-control" type="number" id="input_system_losses"
+                                         ng-model="data.system_losses" float/></div>
+        </div>
+        <div class="form-group form-group-sm">
+            <div class="col-sm-12">
+                <div class="checkbox">
+                    <label><input type="checkbox" ng-model="data.advanced_options_on"/> Advanced settings</label>
+                </div>
+            </div>
+        </div>
+        <div ng-show="data.advanced_options_on">
+            <div class="form-group form-group-sm">
+                <div class="col-sm-4">
+                    <div class="checkbox">
+                        <label> <input type="checkbox" ng-model="data.infer_square_length_from_face"/> Infer square
+                            length from face </label>
+                    </div>
+                </div>
+                <label class="col-sm-2 control-label" for="input_square_length"> Square length (m)</label>
+
+                <div class="col-sm-2"><input class="form-control" type="number" id="input_square_length"
+                                             ng-model="data.square_length" float
+                                             ng-disabled="data.infer_square_length_from_face"/></div>
+                <div class="col-sm-4">
+                    <div></div>
+                </div>
+            </div>
+            <div class="form-group form-group-sm">
+                <label class="col-sm-2 control-label" for="input_inclination_cutoff"> Inclination cutoff
+                    (degree)</label>
+
+                <div class="col-sm-2"><input class="form-control" type="number" id="input_inclination_cutoff"
+                                             ng-model="data.inclination_cutoff" integer/></div>
+                <label class="col-sm-2 control-label" for="input_sky_section_size"> Sky section size (degree)</label>
+
+                <div class="col-sm-2"><input class="form-control" type="number" id="input_sky_section_size"
+                                             ng-model="data.sky_section_size" integer/></div>
+                <div class="col-sm-4">
+                    <div></div>
+                </div>
+            </div>
+            <div class="form-group form-group-sm">
+                <div class="col-sm-4">
+                    <div class="checkbox">
+                        <label> <input type="checkbox" ng-model="data.assume_faces_up"/> Assume all integration faces
+                            are directed upwards
+                            <a href="#" data-toggle="tooltip"
+                               title="Assume all integration faces are faced upwards, thereby correcting for wrongly oriented faces. Switch this off if you want to calculate the irradiance for downward oriented faces.">
+                                help
+                            </a>
+                        </label>
+                    </div>
+                </div>
+                <div class="col-sm-8">
+                    <div></div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <a href="skp:set_default">Save current settings as default...</a>
+</div>
+<script>
+    function receiveData(data) {
+        $scope = angular.element(document.getElementById('sunnyApp')).scope();
+        $scope.data = data;
+        $scope.$apply();
+    }
+
+    var app = angular.module('sunnyApp', []);
+    app.controller('sunnyCtrl', function ($scope) {
+        window.location.href = 'skp:force_update_dialog';
+        $scope.$watchCollection('data', function (newData, oldData) {
+            if (newData !== oldData) {
+                window.location.href = 'skp:return_data@' + JSON.stringify(newData);
+            }
+        });
+    }).directive('integer', function () {
+        return {
+            require: 'ngModel',
+            link: function (scope, ele, attr, ctrl) {
+                ctrl.$parsers.unshift(function (viewValue) {
+                    return parseInt(viewValue, 10);
+                });
+            }
+        };
+    }).directive('float', function () {
+        return {
+            require: 'ngModel',
+            link: function (scope, ele, attr, ctrl) {
+                ctrl.$parsers.unshift(function (viewValue) {
+                    return parseFloat(viewValue, 10);
+                });
+            }
+        };
     });
-}).directive('integer', function(){
-    return {
-        require: 'ngModel',
-        link: function(scope, ele, attr, ctrl){
-            ctrl.$parsers.unshift(function(viewValue){
-                return parseInt(viewValue, 10);
-            });
-        }
-    };
-}).directive('float', function(){
-    return {
-        require: 'ngModel',
-        link: function(scope, ele, attr, ctrl){
-            ctrl.$parsers.unshift(function(viewValue){
-                return parseFloat(viewValue, 10);
-            });
-        }
-    };
-});
-        </script>
-    </body>
+</script>
+</body>
 </html>

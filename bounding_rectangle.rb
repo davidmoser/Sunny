@@ -24,7 +24,7 @@ module BoundingRectangle
 
   def find_uv(face)
     normal = face.normal
-    longest_edge = face.edges.max_by{|e|e.length}
+    longest_edge = face.edges.max_by { |e| e.length }
     u = longest_edge.start.position - longest_edge.end.position
     v = normal * u
     return u, v
@@ -32,12 +32,12 @@ module BoundingRectangle
 
   def find_extremal_points(u, v, list)
     return find_max(u.reverse, list),
-           find_max(u, list),
-           find_max(v.reverse, list),
-           find_max(v, list)
+        find_max(u, list),
+        find_max(v.reverse, list),
+        find_max(v, list)
   end
 
   def find_max(vec, list)
-    return list.max_by{|v| ORIGIN.vector_to(v)%vec}
+    return list.max_by { |v| ORIGIN.vector_to(v)%vec }
   end
 end

@@ -14,7 +14,7 @@ class IrradianceRendering
     @sky_sections = SkySections.new(@irradiances, @data_collectors)
     @shadow_caster = ShadowCaster.new(@grid, sun_data.sun_transformation)
   end
-  
+
   def calculate_irradiances(sun_data, normal)
     irradiances = Hash.new
     for state in sun_data.states
@@ -25,7 +25,7 @@ class IrradianceRendering
     end
     return irradiances
   end
-  
+
   def render()
     render_t = 0
     prepare_center_t = 0
@@ -51,18 +51,18 @@ class IrradianceRendering
     end
     @data_collectors.each { |c| c.wrapup }
     progress.finish
-    
+
     puts "prepare center #{prepare_center_t.round(2)}, "\
       "prepare position #{prepare_position_t.round(2)}, "\
       "render time #{render_t.round(2)}"
     puts "sections with shadow #{@with_shadow}, without shadow #{@without_shadow}"
   end
-  
+
   def prepare_point(point)
     @data_collectors.each { |c| c.current_point=point }
     @shadow_caster.prepare_position(point)
   end
-  
+
   def render_shadows()
     for sky_section in @sky_sections.sections
       if @shadow_caster.is_shadow_section? sky_section
@@ -72,11 +72,11 @@ class IrradianceRendering
           if !@shadow_caster.has_shadow? state.vector
             irradiance = @irradiances[state]
           end
-          @data_collectors.each {|c| c.put(state, irradiance)}
+          @data_collectors.each { |c| c.put(state, irradiance) }
         end
       else
         @without_shadow += 1
-        @data_collectors.each {|c| c.put_section(sky_section)}
+        @data_collectors.each { |c| c.put_section(sky_section) }
       end
     end
   end

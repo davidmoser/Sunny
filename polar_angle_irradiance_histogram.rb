@@ -5,7 +5,7 @@ class PolarAngleIrradianceHistogram < DataCollector
     @histogram = Hash.new(0)
     @bin_size = to_radian(1)
   end
-  
+
   def put(sun_state, irradiance)
     return if not irradiance
     v = sun_state.vector
@@ -14,11 +14,11 @@ class PolarAngleIrradianceHistogram < DataCollector
     bin = to_degree((polar_angle / @bin_size).floor * @bin_size)
     @histogram[bin] += irradiance
   end
-  
+
   def wrapup
-    @histogram = @histogram.sort_by { |a,i| a }
+    @histogram = @histogram.sort_by { |a, i| a }
     File.open('polar_angle_histogram.txt', 'w') do |file|
-      @histogram.each { |a,i| file.write("#{a},#{i}\n") }
+      @histogram.each { |a, i| file.write("#{a},#{i}\n") }
     end
   end
 end
