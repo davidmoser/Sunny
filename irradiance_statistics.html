@@ -16,7 +16,7 @@
     <!-- saved from url=(0014)about:internet -->
 </head>
 <body>
-<div id="sunnyApp" class="container-fluid" ng-app="sunnyApp" ng-controller="sunnyCtrl">
+<div id="sunnyApp" class="container-fluid" ng-controller="sunnyCtrl">
     <div>
         <div class="row">
             <div class="col-sm-4">
@@ -144,17 +144,17 @@
 
 <script>
     window.onerror = function (errorMsg, url, lineNumber) {
-        window.location.href = "skp:puts@" + encodeURIComponent("JavaScript error:\n" + url + " (line " + lineNumber + "): " + errorMsg);
+        message = "JavaScript error:\n" + url + " (line " + lineNumber + "): " + errorMsg;
+        //window.alert(message);
+        window.location.href = "skp:puts@" + encodeURIComponent(message);
         return true;
-    }
+    };
 
-    function initialize(data) {
-        $scope = angular.element(document.getElementById('sunnyApp')).scope();
-        $scope.data = data;
-        $scope.$apply();
-        $scope = angular.element(document.getElementById('scaleForm')).scope();
-        initScaleValues($scope);
-        $scope.createScale();
+    // handling of window.location.href is different in Safari and Explorer
+    // need to make sure that angular is bootstrap after we receive data
+    function initialize(initialData) {
+        data = initialData;
+        angular.bootstrap(document, ['sunnyApp']);
     }
 
     function update(data) {
@@ -167,6 +167,7 @@
 
     var app = angular.module('sunnyApp', ['colorpicker.module']);
     app.controller('sunnyCtrl', function ($scope) {
+        $scope.data = data;
         $scope.$watch('data', function (newData, oldData) {
             if (newData !== oldData) {
                 window.location.href = 'skp:return@' + JSON.stringify(newData);
@@ -227,6 +228,9 @@
             d3.selectAll("#colorbar").call(colorbar);
             //$scope.pointer = d3.selectAll("#colorbar").call(colorbar);
         };
+        
+        initScaleValues($scope);
+        $scope.createScale();
     }).directive('float', function () {
         return {
             require: 'ngModel',
