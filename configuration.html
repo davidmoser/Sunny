@@ -102,8 +102,11 @@ The calculation only factors in the geometric position of panels with respect to
 </div>
 <script>
 
-    function initialize(data) {
-        update(data);
+    // handling of window.location.href is different in Safari and Explorer
+    // need to make sure that angular is bootstrap after we receive data
+    function initialize(initialData) {
+        data = initialData;
+        angular.bootstrap(document, ['sunnyApp']);
     }
 
     function update(data) {
@@ -114,6 +117,7 @@ The calculation only factors in the geometric position of panels with respect to
 
     var app = angular.module('sunnyApp', []);
     app.controller('sunnyCtrl', function ($scope) {
+        $scope.data = data;
         $scope.$watchCollection('data', function (newData, oldData) {
             if (newData !== oldData) {
                 window.location.href = 'skp:return@' + JSON.stringify(newData);
