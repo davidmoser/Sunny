@@ -20,6 +20,7 @@ class SolarIntegrationAppObserver < Sketchup::AppObserver
   def update
     @solar_integration.configuration.update
     @solar_integration.statistics.update
+    # updating sundata is expensive and only done before integration
     @solar_integration.sun_data.clear
   end
 end

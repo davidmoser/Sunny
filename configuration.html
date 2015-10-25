@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="web/bootstrap.min.css">
     <script src="web/jquery.min.js"></script>
     <script src="web/bootstrap.min.js"></script>
-    <script src="web/angular.min.js"></script>
+    <script src="web/angular.js"></script>
 </head>
 <body>
 <div id="sunnyApp" class="container-fluid" ng-app="sunnyApp" ng-controller="sunnyCtrl">
@@ -101,7 +101,12 @@ The calculation only factors in the geometric position of panels with respect to
     <a href="skp:set_default">Save current settings as default...</a>
 </div>
 <script>
-    function receiveData(data) {
+
+    function initialize(data) {
+        update(data);
+    }
+
+    function update(data) {
         $scope = angular.element(document.getElementById('sunnyApp')).scope();
         $scope.data = data;
         $scope.$apply();
@@ -109,10 +114,9 @@ The calculation only factors in the geometric position of panels with respect to
 
     var app = angular.module('sunnyApp', []);
     app.controller('sunnyCtrl', function ($scope) {
-        window.location.href = 'skp:force_update_dialog';
         $scope.$watchCollection('data', function (newData, oldData) {
             if (newData !== oldData) {
-                window.location.href = 'skp:return_data@' + JSON.stringify(newData);
+                window.location.href = 'skp:return@' + JSON.stringify(newData);
             }
         });
     }).directive('integer', function () {
@@ -134,6 +138,9 @@ The calculation only factors in the geometric position of panels with respect to
             }
         };
     });
+
+    window.location.href = 'skp:initialize';
+
 </script>
 </body>
 </html>

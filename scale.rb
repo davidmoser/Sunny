@@ -41,7 +41,6 @@ class Scale < JsonSerialization
       initializing = @current_hash==''
       @current_hash = hash
       super(hash)
-      @irradiance_statistics.set_pointer_value(nil, nil)
       init_caches
       if not initializing
         update_tile_colors

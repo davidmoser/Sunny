@@ -9,19 +9,13 @@
     <link rel="stylesheet" href="web/colorpicker.min.css">
     <script src="web/jquery.min.js"></script>
     <script src="web/bootstrap.min.js"></script>
-    <script src="web/angular.min.js"></script>
-    <script src="web/d3.min.js"></script>
+    <script src="web/angular.js"></script>
+    <script src="web/d3.js"></script>
     <script src="web/colorbar.js"></script>
     <script src="web/bootstrap-colorpicker-module.min.js"></script>
     <!-- saved from url=(0014)about:internet -->
 </head>
 <body>
-<script>
-    window.onerror = function (errorMsg, url, lineNumber) {
-        window.location.href = "skp:puts@" + encodeURIComponent("JavaScript error:\n" + url + " (line " + lineNumber + "): " + errorMsg);
-        return true;
-    }
-</script>
 <div id="sunnyApp" class="container-fluid" ng-app="sunnyApp" ng-controller="sunnyCtrl">
     <div>
         <div class="row">
@@ -66,9 +60,9 @@
             <div class="col-sm-12">
                 <div class="checkbox">
                     <label><input type="checkbox" ng-model="data.scale.color_by_relative_value"
-                                  ng-change="createScale()"
-                                  title="faces are colored independently, with 100% being the maximum possible irradiance for a face"/>
-                        Use face-relative coloring
+                                  ng-change="createScale()" ng-disabled="scaleEditOpen"
+                                  title="100% means no shadow and 0% means shadow all the time"/>
+                        Use relative coloring
                     </label>
                 </div>
             </div>
@@ -76,20 +70,14 @@
         <div class="form-group form-group-sm">
             <div class="col-sm-12">
                 <div class="checkbox">
-                    <label><input type="checkbox" ng-model="data.scale.color_gradient" ng-change="createScale()"/>
+                    <label><input type="checkbox" ng-model="data.scale.color_gradient"
+                                  ng-change="createScale()" ng-disabled="scaleEditOpen"/>
                         Use continuous coloring grade
                     </label>
                 </div>
             </div>
         </div>
-        <div ng-show="scalePropertiesVisible">
-            <div class="form-group form-group-sm">
-                <label class="col-xs-2 control-label" for="input_color1"> Color 1: </label>
-
-                <div class="col-xs-8"><input ng-attr-style="background-color: {{ color1 }};" class="form-control"
-                                             id="input_color1" colorpicker="rgb" ng-model="color1"
-                                             ng-change="createScale()" type="text"/></div>
-            </div>
+        <div ng-show="scaleEditOpen">
             <div class="form-group form-group-sm" ng-class="{'has-error': !scaleForm.color1field.$valid}">
                 <label class="col-xs-2 control-label" for="input_color1value"> Percentage: </label>
 
@@ -98,10 +86,10 @@
                                              min="{{ (color2value || 1) + 1 }}" max="100" float required/></div>
             </div>
             <div class="form-group form-group-sm">
-                <label class="col-xs-2 control-label" for="input_color2"> Color 2: </label>
+                <label class="col-xs-2 control-label" for="input_color1"> Color 1: </label>
 
-                <div class="col-xs-8"><input ng-attr-style="background-color: {{ color2 }};" class="form-control"
-                                             id="input_color1" colorpicker="rgb" ng-model="color2"
+                <div class="col-xs-8"><input ng-attr-style="background-color: {{ color1 }};" class="form-control"
+                                             id="input_color1" colorpicker="rgb" ng-model="color1"
                                              ng-change="createScale()" type="text"/></div>
             </div>
             <div class="form-group form-group-sm" ng-class="{'has-error': !scaleForm.color2field.$valid}">
@@ -113,10 +101,10 @@
                                              float required/></div>
             </div>
             <div class="form-group form-group-sm">
-                <label class="col-xs-2 control-label" for="input_color3"> Color 3: </label>
+                <label class="col-xs-2 control-label" for="input_color2"> Color 2: </label>
 
-                <div class="col-xs-8"><input ng-attr-style="background-color: {{ color3 }};" class="form-control"
-                                             id="input_color1" colorpicker="rgb" ng-model="color3"
+                <div class="col-xs-8"><input ng-attr-style="background-color: {{ color2 }};" class="form-control"
+                                             id="input_color2" colorpicker="rgb" ng-model="color2"
                                              ng-change="createScale()" type="text"/></div>
             </div>
             <div class="form-group form-group-sm" ng-class="{'has-error': !scaleForm.color3field.$valid}">
@@ -125,6 +113,13 @@
                 <div class="col-xs-8"><input name="color3field" class="form-control" type="number"
                                              id="input_color3value" ng-model="color3value" ng-change="createScale()"
                                              min="0" max="{{ (color2value || 99) - 1 }}" float required/></div>
+            </div>
+            <div class="form-group form-group-sm">
+                <label class="col-xs-2 control-label" for="input_color3"> Color 3: </label>
+
+                <div class="col-xs-8"><input ng-attr-style="background-color: {{ color3 }};" class="form-control"
+                                             id="input_color3" colorpicker="rgb" ng-model="color3"
+                                             ng-change="createScale()" type="text"/></div>
             </div>
             <div class="form-group form-group-sm">
                 <div class="col-xs-12">
@@ -137,13 +132,13 @@
         </div>
         <div class="form-group form-group-sm">
             <div class="col-xs-6">
-                <button type="button" class="btn btn-default" ng-click="scalePropertiesVisible=true"
-                        ng-show="!scalePropertiesVisible">Edit scale
+                <button type="button" class="btn btn-default" ng-click="scaleEditOpen=true"
+                        ng-show="!scaleEditOpen">Edit scale
                 </button>
             </div>
             <div class="col-xs-6"></div>
         </div>
-        <a href="skp:set_default" ng-show="!scalePropertiesVisible">Save current settings as default...</a>
+        <!--<a href="skp:set_default" ng-show="!scaleEditOpen">Save current settings as default...</a>-->
     </form>
 </div>
 
@@ -153,20 +148,28 @@
         return true;
     }
 
-    function receiveData(data) {
+    function initialize(data) {
         $scope = angular.element(document.getElementById('sunnyApp')).scope();
         $scope.data = data;
         $scope.$apply();
         $scope = angular.element(document.getElementById('scaleForm')).scope();
-        $scope.cancelScaleChanges && $scope.cancelScaleChanges();
+        initScaleValues($scope);
+        $scope.createScale();
+    }
+
+    function update(data) {
+        $scope = angular.element(document.getElementById('sunnyApp')).scope();
+        $scope.data = data;
+        $scope.$apply();
+        $scope = angular.element(document.getElementById('scaleForm')).scope();
+        $scope.cancelScaleChanges();
     }
 
     var app = angular.module('sunnyApp', ['colorpicker.module']);
     app.controller('sunnyCtrl', function ($scope) {
-        window.location.href = 'skp:force_update_dialog';
         $scope.$watch('data', function (newData, oldData) {
             if (newData !== oldData) {
-                window.location.href = 'skp:return_data@' + JSON.stringify(newData);
+                window.location.href = 'skp:return@' + JSON.stringify(newData);
             }
         }, true);
     }).controller('scaleCtrl', function ($scope) {
@@ -175,13 +178,12 @@
         $scope.$watch('data.pointer_value', function (colorBarValue, oldData) {
             // $scope.pointer.pointTo(colorBarValue);
         });
-        initScaleValues($scope);
 
         $scope.cancelScaleChanges = function () {
             initScaleValues($scope);
-            $scope.scalePropertiesVisible = false;
+            $scope.scaleEditOpen = false;
             $scope.createScale();
-        }
+        };
 
         $scope.saveScaleChanges = function () {
             if (typeof $scope.data !== 'undefined') {
@@ -191,45 +193,40 @@
                 $scope.data.scale.color1value = $scope.color1value;
                 $scope.data.scale.color2value = $scope.color2value;
                 $scope.data.scale.color3value = $scope.color3value;
-                $scope.scalePropertiesVisible = false;
+                $scope.scaleEditOpen = false;
             }
         };
 
         $scope.createScale = function () {
             var max;
-            if (typeof $scope.data !== 'undefined') {
-                if ($scope.data.scale.color_by_relative_value) {
-                    max = 1;
-                } else {
-                    max = $scope.data.max_irradiance / 100;
-                }
+            if ($scope.data.scale.color_by_relative_value) {
+                max = 1;
+            } else {
+                max = $scope.data.max_irradiance / 100;
             }
 
             var scale;
-            if (typeof $scope.data !== 'undefined') {
-                if ($scope.data.scale.color_gradient) {
-                    scale = d3.scale.linear()
-                            .domain([$scope.color3value * max, $scope.color2value * max, $scope.color1value * max])
-                            .range([$scope.color3, $scope.color2, $scope.color1])
-                            .clamp(true);
-                } else {
-                    scale = d3.scale.threshold()
-                            .domain([0, $scope.color3value * max, $scope.color2value * max, 100 * max])
-                            .range([$scope.color3, $scope.color3, $scope.color2, $scope.color1, $scope.color1]);
-                }
+            if ($scope.data.scale.color_gradient) {
+                scale = d3.scale.linear()
+                        .domain([$scope.color3value * max, $scope.color2value * max, $scope.color1value * max])
+                        .range([$scope.color3, $scope.color2, $scope.color1])
+                        .clamp(true);
+            } else {
+                scale = d3.scale.threshold()
+                        .domain([0, $scope.color3value * max, $scope.color2value * max, 100 * max])
+                        .range([$scope.color3, $scope.color3, $scope.color2, $scope.color1, $scope.color1]);
             }
 
             var colorbar = Colorbar()
-                    .origin([0, 0])
+                    .origin({x: 30, y: 10})
                     .scale(scale)
                     .barlength(300)
                     .thickness(20)
                     .orient('vertical');
 
+            d3.selectAll("#colorbar").call(colorbar);
             //$scope.pointer = d3.selectAll("#colorbar").call(colorbar);
         };
-
-        $scope.createScale();
     }).directive('float', function () {
         return {
             require: 'ngModel',
@@ -258,6 +255,9 @@
     function arrayToColor(colorArray) {
         return 'rgb(' + colorArray.join() + ')';
     }
+
+    window.location.href = "skp:initialize";
+
 </script>
 </body>
 </html>

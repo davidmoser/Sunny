@@ -4,21 +4,52 @@ require 'sketchup.rb'
 
 class DhtmlDialog < JsonSerialization
   def initialize
-    dialog_title = title(self.class.name)
-    @dialog_name = underscore(self.class.name)
-
-    @dialog = UI::WebDialog.new(dialog_title, true, 'solar_integration_' + @dialog_name, 400, 400, 150, 150, true)
-
-    update
-
     if not @skip_variables
       @skip_variables = []
     end
     @skip_variables += ['@dialog', '@dialog_name', '@title', '@saving_allowed']
 
+    create_dialog
+
+    update_state
+  end
+
+  def update_dialog
+    puts 'update'
+    script = "update(#{to_json(nil)});"
+    @dialog.execute_script(script)
+  end
+
+  # called in initialization or when model changes
+  def update
+    @saving_allowed = false
+    update_state
+    update_dialog
+  end
+
+  def show
+    @dialog.show
+  end
+
+  private
+
+  def create_dialog
+    dialog_title = title(self.class.name)
+    @dialog_name = underscore(self.class.name)
+
+    @dialog = UI::WebDialog.new(dialog_title, true, 'solar_integration_' + @dialog_name, 400, 400, 150, 150, true)
     @dialog.set_file(template_path)
 
-    @dialog.add_action_callback('return_data') do |dialog, json|
+    add_callbacks
+  end
+
+  def add_callbacks
+    @dialog.add_action_callback('initialize') do |dialog|
+      script = "initialize(#{to_json(nil)});"
+      @dialog.execute_script(script)
+    end
+
+    @dialog.add_action_callback('return') do |dialog, json|
       puts json
       update_from_json(json)
       if @saving_allowed
@@ -27,20 +58,9 @@ class DhtmlDialog < JsonSerialization
       @saving_allowed = true
     end
 
-    @dialog.add_action_callback('puts') do |dialog, text|
-      puts text
-    end
-
-    @dialog.add_action_callback('force_update_dialog') do |dialog|
-      update_dialog
-    end
-
     @dialog.add_action_callback('reset') do |dialog|
       initialize_values
-    end
-
-    @dialog.add_action_callback('puts') do |dialog, text|
-      puts text
+      update_dialog
     end
 
     @dialog.add_action_callback('set_default') do |dialog|
@@ -50,11 +70,6 @@ class DhtmlDialog < JsonSerialization
         UI.messagebox('Settings have been saved.')
       end
     end
-  end
-
-  def update_dialog
-    script = "receiveData(#{to_json(nil)});"
-    @dialog.execute_script(script)
   end
 
   def default_file_path
@@ -76,12 +91,10 @@ class DhtmlDialog < JsonSerialization
     Sketchup.active_model.set_attribute('solar_integration', @dialog_name, data)
   end
 
-  def update
-    @saving_allowed = !@dialog.visible? # prevent saving from dialog callback
+  def update_state
     initialize_values # Plugin default
     update_from_file # Saved Sketchup-wide default
     update_from_model # Model settings
-    update_dialog
   end
 
   def update_from_file
@@ -96,10 +109,6 @@ class DhtmlDialog < JsonSerialization
     if data
       update_from_json(data)
     end
-  end
-
-  def show
-    @dialog.show
   end
 
   def underscore(camel_cased_word)

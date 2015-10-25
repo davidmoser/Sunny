@@ -10,6 +10,7 @@ class IrradianceStatistics < DhtmlDialog
 
   def initialize
     @skip_variables = ['@tile_groups', '@visible_tile_groups', '@pointer_value']
+    @pointer_value = nil
     super
   end
 
@@ -30,7 +31,7 @@ class IrradianceStatistics < DhtmlDialog
     else
       @pointer_value = irradiance
     end
-    puts @pointer_value
+    #puts @pointer_value
     update_dialog
   end
 
