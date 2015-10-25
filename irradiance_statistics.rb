@@ -9,7 +9,7 @@ class IrradianceStatistics < DhtmlDialog
                 :total_irradiation, :total_kwh, :kwp, :kwh_per_kwp
 
   def initialize
-    @skip_variables = ['@tile_groups', '@visible_tile_groups', '@pointer_value']
+    @skip_variables = ['@tile_groups', '@visible_tile_groups']
     @pointer_value = nil
     super
   end

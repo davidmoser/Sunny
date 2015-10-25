@@ -53,37 +53,37 @@ function Colorbar() {
                 .selectAll('.pointer')
                 .data([inputNumbers]);
 
+            window.alert(inputNumbers);
             pointerSVGdef = function () {
-                return (
-                    orient === "horizontal" ?
-                    'M ' + 0 + ' ' + thickness + ' l -' + pointerWidth + ' -' + pointerWidth + ' l ' + 2 * pointerWidth + ' -' + 0 + ' z' :
-                    'M ' + thickness + ' ' + 0 + ' l -' + pointerWidth + ' -' + pointerWidth + ' l ' + 0 + ' ' + 2 * pointerWidth + ' z'
-                );
+                return orient === "horizontal" ?
+                'M ' + 0 + ' ' + thickness + ' l -' + pointerWidth + ' -' + pointerWidth + ' l ' + 2 * pointerWidth + ' -' + 0 + ' z' :
+                'M ' + thickness + ' ' + 0 + ' l -' + pointerWidth + ' -' + pointerWidth + ' l ' + 0 + ' ' + 2 * pointerWidth + ' z';
             };
 
             pointers
                 .enter()
                 .append('path')
-                .attr('transform', "translate(0," + (
-                fillLegendScale(inputNumbers) - pointerWidth) + ')'
-            )
+                .attr('transform', function(input) {
+                    return "translate(0," + (
+                    fillLegendScale(input) - pointerWidth) + ')'
+                })
                 .classed("pointer", true)
                 .classed("axis", true)
                 .attr('d', pointerSVGdef())
                 .attr("fill", "grey")
                 .attr("opacity", "0");
 
-            //whether it's new or not, it updates it.
+            // whether new or not, update it.
             pointers
                 .transition()
                 .duration(300)
                 .attr('opacity', 1)
-                .attr('transform',
-                orient === "vertical" ?
-                "translate(0," + (fillLegendScale(inputNumbers)) + ')' :
-                "translate(" + (fillLegendScale(inputNumbers)) + ',0)'
-            )
-                //and then it fades the pointer out over 5 seconds.
+                .attr('transform', function (input) {
+                    return orient === "vertical" ?
+                    "translate(0," + (fillLegendScale(input)) + ')' :
+                    "translate(" + (fillLegendScale(input)) + ',0)'
+                })
+                //and then fade out the pointer in  5 seconds.
                 .transition()
                 .delay(2000)
                 .duration(3000)

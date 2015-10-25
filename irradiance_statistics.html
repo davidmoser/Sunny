@@ -138,7 +138,7 @@
             </div>
             <div class="col-xs-6"></div>
         </div>
-        <!--<a href="skp:set_default" ng-show="!scaleEditOpen">Save current settings as default...</a>-->
+        <a href="skp:set_default" ng-show="!scaleEditOpen">Save current settings as default...</a>
     </form>
 </div>
 
@@ -149,21 +149,6 @@
         window.location.href = "skp:puts@" + encodeURIComponent(message);
         return true;
     };
-
-    // handling of window.location.href is different in Safari and Explorer
-    // need to make sure that angular is bootstrap after we receive data
-    function initialize(initialData) {
-        data = initialData;
-        angular.bootstrap(document, ['sunnyApp']);
-    }
-
-    function update(data) {
-        $scope = angular.element(document.getElementById('sunnyApp')).scope();
-        $scope.data = data;
-        $scope.$apply();
-        $scope = angular.element(document.getElementById('scaleForm')).scope();
-        $scope.cancelScaleChanges();
-    }
 
     var app = angular.module('sunnyApp', ['colorpicker.module']);
     app.controller('sunnyCtrl', function ($scope) {
@@ -177,7 +162,7 @@
         d3.selectAll("svg").append("g").attr("id", "colorbar");
 
         $scope.$watch('data.pointer_value', function (colorBarValue, oldData) {
-            // $scope.pointer.pointTo(colorBarValue);
+            $scope.pointer.pointTo(colorBarValue);
         });
 
         $scope.cancelScaleChanges = function () {
@@ -226,9 +211,9 @@
                     .orient('vertical');
 
             d3.selectAll("#colorbar").call(colorbar);
-            //$scope.pointer = d3.selectAll("#colorbar").call(colorbar);
+            $scope.pointer = d3.selectAll("#colorbar").call(colorbar);
         };
-        
+
         initScaleValues($scope);
         $scope.createScale();
     }).directive('float', function () {
@@ -260,7 +245,23 @@
         return 'rgb(' + colorArray.join() + ')';
     }
 
-    window.location.href = "skp:initialize";
+
+    // handling of window.location.href is different in Safari and Explorer
+    // this way we make sure that angular is bootstrap after we receive initial data
+    function initialize(initialData) {
+        data = initialData;
+        angular.bootstrap(document, ['sunnyApp']);
+    }
+
+    function update(data) {
+        $scope = angular.element(document.getElementById('sunnyApp')).scope();
+        $scope.data = data;
+        $scope.$apply();
+        $scope = angular.element(document.getElementById('scaleForm')).scope();
+        $scope.cancelScaleChanges();
+    }
+
+     window.location.href = "skp:initialize";
 
 </script>
 </body>

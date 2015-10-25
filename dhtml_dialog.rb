@@ -15,7 +15,6 @@ class DhtmlDialog < JsonSerialization
   end
 
   def update_dialog
-    puts 'update'
     script = "update(#{to_json(nil)});"
     @dialog.execute_script(script)
   end
@@ -37,7 +36,7 @@ class DhtmlDialog < JsonSerialization
     dialog_title = title(self.class.name)
     @dialog_name = underscore(self.class.name)
 
-    @dialog = UI::WebDialog.new(dialog_title, true, 'solar_integration_' + @dialog_name, 400, 400, 150, 150, true)
+    @dialog = UI::WebDialog.new(dialog_title, true, 'solar_integration_' + @dialog_name, 300, 600, 150, 150, true)
     @dialog.set_file(template_path)
 
     add_callbacks
