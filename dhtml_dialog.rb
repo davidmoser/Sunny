@@ -29,6 +29,11 @@ class DhtmlDialog < JsonSerialization
   def show
     @dialog.show
   end
+  
+  def save_to_model
+    data = to_json(nil)
+    Sketchup.active_model.set_attribute('solar_integration', @dialog_name, data)
+  end
 
   private
 
@@ -83,11 +88,6 @@ class DhtmlDialog < JsonSerialization
   def save_to_file
     data = to_json(nil)
     File.open(default_file_path, 'w') { |f| f.write(data) }
-  end
-
-  def save_to_model
-    data = to_json(nil)
-    Sketchup.active_model.set_attribute('solar_integration', @dialog_name, data)
   end
 
   def update_state

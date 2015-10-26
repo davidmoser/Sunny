@@ -53,7 +53,6 @@ function Colorbar() {
                 .selectAll('.pointer')
                 .data([inputNumbers]);
 
-            window.alert(inputNumbers);
             pointerSVGdef = function () {
                 return orient === "horizontal" ?
                 'M ' + 0 + ' ' + thickness + ' l -' + pointerWidth + ' -' + pointerWidth + ' l ' + 2 * pointerWidth + ' -' + 0 + ' z' :
